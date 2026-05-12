@@ -1,0 +1,2589 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard TPV</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --navy:    #0F1F3D;
+  --navy2:   #1A3260;
+  --blue:    #2563EB;
+  --blue-lt: #EFF6FF;
+  --teal:    #0D9488;
+  --green:   #16A34A;
+  --green-lt:#DCFCE7;
+  --amber:   #D97706;
+  --amber-lt:#FEF3C7;
+  --red:     #DC2626;
+  --red-lt:  #FEE2E2;
+  --gray-50: #F8FAFC;
+  --gray-100:#F1F5F9;
+  --gray-200:#E2E8F0;
+  --gray-400:#94A3B8;
+  --gray-600:#475569;
+  --gray-800:#1E293B;
+  --white:   #FFFFFF;
+  --font:    'DM Sans', sans-serif;
+  --mono:    'DM Mono', monospace;
+  --radius:  10px;
+  --radius-lg: 16px;
+  --shadow:  0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.12);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
+
+/* ── TOP BAR */
+.topbar {
+  background: var(--navy);
+  padding: 0 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px; position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 16px rgba(0,0,0,.3);
+}
+.topbar-brand { display: flex; align-items: center; gap: 10px; }
+.topbar-logo { width: 30px; height: 30px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.topbar-logo svg { width: 18px; height: 18px; fill: white; }
+.topbar-title { font-size: 15px; font-weight: 600; color: white; letter-spacing: -.2px; }
+.topbar-sub { font-size: 11px; color: var(--gray-400); margin-left: 2px; }
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
+.btn { font-family: var(--font); font-size: 12px; font-weight: 500; cursor: pointer; border-radius: 8px; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; border: none; }
+.btn-ghost { background: rgba(255,255,255,.08); color: rgba(255,255,255,.85); padding: 6px 12px; }
+.btn-ghost:hover { background: rgba(255,255,255,.15); }
+.btn-accent { background: var(--blue); color: white; padding: 7px 14px; }
+.btn-accent:hover { background: #1d4ed8; }
+.btn-outline { background: white; color: var(--gray-600); border: 1px solid var(--gray-200); padding: 6px 12px; }
+.btn-outline:hover { background: var(--gray-50); border-color: var(--gray-400); }
+.btn-danger { background: var(--red); color: white; padding: 6px 12px; }
+.btn-danger:hover { background: #b91c1c; }
+
+/* ── LAYOUT */
+.page { max-width: 1400px; margin: 0 auto; padding: 1.5rem 1.5rem 3rem; }
+
+/* ── UPLOAD ZONE */
+.upload-zone {
+  border: 2px dashed var(--gray-200); border-radius: var(--radius-lg);
+  background: white; padding: 3rem 2rem; text-align: center;
+  cursor: pointer; transition: all .2s; margin-bottom: 1.5rem;
+}
+.upload-zone:hover, .upload-zone.drag { border-color: var(--blue); background: var(--blue-lt); }
+.upload-zone.drag { transform: scale(1.01); }
+.upload-icon { width: 52px; height: 52px; background: var(--blue-lt); border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+.upload-icon svg { width: 26px; height: 26px; stroke: var(--blue); fill: none; stroke-width: 1.8; }
+.upload-title { font-size: 16px; font-weight: 600; color: var(--gray-800); margin-bottom: 4px; }
+.upload-sub { font-size: 13px; color: var(--gray-400); margin-bottom: 1rem; }
+.upload-hint { font-size: 11px; color: var(--gray-400); margin-top: .75rem; background: var(--gray-100); padding: 8px 14px; border-radius: 6px; display: inline-block; font-family: var(--mono); }
+
+/* ── CONTROLS BAR */
+.controls {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: white; padding: 12px 16px; border-radius: var(--radius);
+  box-shadow: var(--shadow); margin-bottom: 1.25rem;
+}
+.controls-label { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: .06em; }
+.month-chip {
+  font-size: 12px; font-weight: 500; padding: 5px 14px; border-radius: 99px;
+  cursor: pointer; border: 1.5px solid var(--gray-200); background: none;
+  color: var(--gray-600); font-family: var(--font); transition: all .15s;
+}
+.month-chip:hover { border-color: var(--blue); color: var(--blue); }
+.month-chip.active { background: var(--navy); color: white; border-color: var(--navy); }
+.controls-divider { width: 1px; height: 24px; background: var(--gray-200); margin: 0 4px; }
+.search-wrap { position: relative; flex: 1; min-width: 160px; }
+.search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; stroke: var(--gray-400); fill: none; stroke-width: 2; }
+.search-input { width: 100%; padding: 6px 10px 6px 30px; border: 1px solid var(--gray-200); border-radius: 8px; font-size: 12px; font-family: var(--font); outline: none; transition: border .15s; }
+.search-input:focus { border-color: var(--blue); }
+select.filter { font-size: 12px; font-family: var(--font); padding: 6px 10px; border: 1px solid var(--gray-200); border-radius: 8px; outline: none; background: white; color: var(--gray-800); cursor: pointer; }
+select.filter:focus { border-color: var(--blue); }
+
+/* ── KPI GRID */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 1.25rem; }
+.kpi-card {
+  background: white; border-radius: var(--radius-lg); padding: 1.1rem 1.25rem;
+  box-shadow: var(--shadow); border-top: 3px solid transparent; position: relative; overflow: hidden;
+}
+.kpi-card::after { content: ''; position: absolute; right: -10px; top: -10px; width: 70px; height: 70px; border-radius: 50%; opacity: .06; }
+.kpi-card.blue  { border-color: var(--blue);  } .kpi-card.blue::after  { background: var(--blue); }
+.kpi-card.green { border-color: var(--green); } .kpi-card.green::after { background: var(--green); }
+.kpi-card.red   { border-color: var(--red);   } .kpi-card.red::after   { background: var(--red); }
+.kpi-card.amber { border-color: var(--amber); } .kpi-card.amber::after { background: var(--amber); }
+.kpi-card.teal  { border-color: var(--teal);  } .kpi-card.teal::after  { background: var(--teal); }
+.kpi-label { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+.kpi-value { font-size: 26px; font-weight: 600; line-height: 1; margin-bottom: 4px; }
+.kpi-card.blue  .kpi-value { color: var(--blue); }
+.kpi-card.green .kpi-value { color: var(--green); }
+.kpi-card.red   .kpi-value { color: var(--red); }
+.kpi-card.amber .kpi-value { color: var(--amber); }
+.kpi-card.teal  .kpi-value { color: var(--teal); }
+.kpi-sub { font-size: 11px; color: var(--gray-400); }
+
+/* ── CHARTS ROW */
+.charts-row { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-bottom: 1.25rem; }
+.chart-card { background: white; border-radius: var(--radius-lg); padding: 1.25rem; box-shadow: var(--shadow); }
+.chart-title { font-size: 12px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 1rem; }
+
+/* ── TABLE */
+.table-card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
+.table-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--gray-100); }
+.table-title { font-size: 14px; font-weight: 600; color: var(--gray-800); }
+.table-count { font-size: 12px; color: var(--gray-400); background: var(--gray-100); padding: 2px 10px; border-radius: 99px; }
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { background: var(--navy); color: rgba(255,255,255,.85); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 10px 14px; text-align: left; white-space: nowrap; }
+tbody tr { border-bottom: 1px solid var(--gray-100); transition: background .1s; }
+tbody tr:hover { background: var(--blue-lt); }
+tbody tr:last-child { border-bottom: none; }
+tbody td { padding: 10px 14px; vertical-align: middle; }
+.td-name { font-weight: 500; color: var(--gray-800); }
+.td-money { font-family: var(--mono); font-size: 12px; color: var(--gray-600); }
+.pct-wrap { display: flex; align-items: center; gap: 8px; }
+.pct-bar-bg { flex: 1; height: 5px; background: var(--gray-200); border-radius: 99px; overflow: hidden; min-width: 50px; }
+.pct-bar { height: 5px; border-radius: 99px; transition: width .4s ease; }
+.pct-label { font-size: 12px; font-weight: 600; font-family: var(--mono); min-width: 38px; text-align: right; }
+.badge { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+.badge-ok     { background: var(--green-lt); color: #15803d; }
+.badge-warn   { background: var(--amber-lt); color: #b45309; }
+.badge-danger { background: var(--red-lt);   color: #b91c1c; }
+.motivo-cell { max-width: 180px; }
+.motivo-text { font-size: 11px; color: var(--gray-600); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; display: block; }
+.motivo-exec { font-size: 10px; color: var(--gray-400); display: block; margin-top: 1px; }
+.btn-edit { background: none; border: 1px solid var(--gray-200); border-radius: 6px; padding: 3px 8px; cursor: pointer; font-size: 11px; color: var(--gray-600); display: inline-flex; align-items: center; gap: 4px; font-family: var(--font); transition: all .15s; margin-top: 3px; }
+.btn-edit:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-lt); }
+.btn-edit svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* ── EVOLUÇÃO TAB */
+.evo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.25rem; }
+
+/* ── MODAL */
+.overlay { position: fixed; inset: 0; background: rgba(15,31,61,.55); z-index: 500; display: none; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+.overlay.open { display: flex; }
+.modal { background: white; border-radius: var(--radius-lg); padding: 0; width: 460px; max-width: 95vw; box-shadow: var(--shadow-lg); overflow: hidden; animation: slideUp .2s ease; }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+.modal-head { background: var(--navy); padding: 1.1rem 1.4rem; display: flex; align-items: center; justify-content: space-between; }
+.modal-head-title { font-size: 14px; font-weight: 600; color: white; }
+.modal-head-store { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+.btn-close { background: rgba(255,255,255,.1); border: none; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; color: white; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: background .15s; }
+.btn-close:hover { background: rgba(255,255,255,.2); }
+.modal-body { padding: 1.25rem 1.4rem; display: grid; gap: 12px; }
+.field label { display: block; font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+.field input, .field select, .field textarea { width: 100%; font-size: 13px; font-family: var(--font); padding: 8px 11px; border: 1px solid var(--gray-200); border-radius: 8px; outline: none; transition: border .15s; color: var(--gray-800); background: white; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+.field textarea { resize: vertical; min-height: 80px; }
+.modal-pct-info { background: var(--gray-100); border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 12px; }
+.modal-pct-big { font-size: 28px; font-weight: 700; font-family: var(--mono); }
+.modal-pct-desc { font-size: 12px; color: var(--gray-400); line-height: 1.4; }
+.modal-foot { padding: .9rem 1.4rem; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--gray-100); }
+
+/* ── TABS */
+.tabs { display: flex; gap: 0; border-bottom: 2px solid var(--gray-200); margin-bottom: 1.25rem; }
+.tab-btn { font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--gray-400); padding: 10px 18px; cursor: pointer; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .15s; }
+.tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); font-weight: 600; }
+.tab-btn:hover:not(.active) { color: var(--gray-600); }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* ── EMPTY / LOADING */
+.empty { text-align: center; padding: 4rem 2rem; }
+.empty-icon { font-size: 48px; margin-bottom: 1rem; }
+.empty-title { font-size: 16px; font-weight: 600; color: var(--gray-600); margin-bottom: 6px; }
+.empty-sub { font-size: 13px; color: var(--gray-400); }
+
+/* ── TOAST */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--navy); color: white; padding: 10px 18px; border-radius: 10px; font-size: 13px; box-shadow: var(--shadow-lg); transform: translateY(80px); opacity: 0; transition: all .3s; z-index: 999; }
+.toast.show { transform: none; opacity: 1; }
+
+
+/* ── DATE BAR */
+.date-bar {
+  background: white; border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 12px 16px; margin-bottom: 1.25rem;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.date-bar-title { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+.date-field { display: flex; align-items: center; gap: 8px; }
+.date-field label { font-size: 12px; color: var(--gray-600); white-space: nowrap; }
+.date-field input[type=date] { font-size: 12px; font-family: var(--font); padding: 5px 9px; border: 1px solid var(--gray-200); border-radius: 8px; outline: none; color: var(--gray-800); cursor: pointer; }
+.date-field input[type=date]:focus { border-color: var(--blue); }
+.date-progress { flex: 1; min-width: 180px; }
+.date-progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--gray-400); margin-bottom: 4px; }
+.date-progress-bar-bg { height: 6px; background: var(--gray-200); border-radius: 99px; overflow: hidden; }
+.date-progress-bar { height: 6px; background: var(--blue); border-radius: 99px; transition: width .4s; }
+.date-stat { text-align: center; }
+.date-stat-val { font-size: 18px; font-weight: 600; color: var(--navy); font-family: var(--mono); }
+.date-stat-lbl { font-size: 10px; color: var(--gray-400); }
+.divider-v { width: 1px; height: 36px; background: var(--gray-200); }
+/* projection badge on table */
+.proj-val { font-family: var(--mono); font-size: 12px; font-weight: 600; }
+.proj-badge { font-size: 10px; padding: 2px 7px; border-radius: 99px; margin-left: 4px; }
+.proj-ok    { background: #DCFCE7; color: #15803d; }
+.proj-warn  { background: #FEF3C7; color: #b45309; }
+.proj-bad   { background: #FEE2E2; color: #b91c1c; }
+/* pace indicator */
+.pace-wrap { display: flex; align-items: center; gap: 6px; }
+.pace-bar-bg { flex:1; height:5px; background:var(--gray-200); border-radius:99px; overflow:hidden; min-width:40px; }
+.pace-bar { height:5px; border-radius:99px; }
+
+
+/* ── COMISSÕES */
+.exec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-bottom: 1.5rem; }
+.exec-card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
+.exec-card-head { padding: 14px 16px 10px; border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; justify-content: space-between; }
+.exec-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.exec-name { font-size: 14px; font-weight: 600; color: var(--gray-800); }
+.exec-nivel { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
+.exec-card-body { padding: 12px 16px; display: grid; gap: 8px; }
+.exec-metric { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+.exec-metric-label { color: var(--gray-400); }
+.exec-metric-val { font-weight: 600; font-family: var(--mono); font-size: 13px; color: var(--gray-800); }
+.exec-ating-wrap { margin-top: 4px; }
+.exec-ating-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--gray-400); margin-bottom: 4px; }
+.exec-ating-bar-bg { height: 8px; background: var(--gray-100); border-radius: 99px; overflow: hidden; }
+.exec-ating-bar { height: 8px; border-radius: 99px; transition: width .5s ease; }
+.faixa-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 99px; display: inline-block; margin-top: 6px; }
+.exec-card-foot { padding: 10px 16px; background: var(--gray-50); border-top: 1px solid var(--gray-100); display: flex; justify-content: space-between; align-items: center; }
+.exec-card-foot-label { font-size: 11px; color: var(--gray-400); }
+.exec-card-foot-val { font-size: 13px; font-weight: 700; }
+
+/* ── LOGIN COMISSÃO */
+.login-screen { max-width: 420px; margin: 2rem auto; }
+.login-card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); overflow: hidden; }
+.login-head { background: var(--navy); padding: 1.5rem; text-align: center; }
+.login-head-title { font-size: 18px; font-weight: 700; color: white; margin-bottom: 4px; }
+.login-head-sub { font-size: 12px; color: var(--gray-400); }
+.login-body { padding: 1.5rem; display: grid; gap: 14px; }
+.login-field label { display: block; font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+.login-field select, .login-field input { width: 100%; font-size: 14px; font-family: var(--font); padding: 10px 12px; border: 1.5px solid var(--gray-200); border-radius: 10px; outline: none; transition: border .15s; color: var(--gray-800); }
+.login-field select:focus, .login-field input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+.login-error { font-size: 12px; color: var(--red); text-align: center; display: none; }
+.btn-login { width: 100%; padding: 12px; background: var(--navy); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; font-family: var(--font); cursor: pointer; transition: background .15s; }
+.btn-login:hover { background: var(--navy2); }
+
+/* ── RESULTADO PESSOAL */
+.result-screen { max-width: 560px; margin: 1.5rem auto; display: none; }
+.result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.result-back { font-size: 12px; color: var(--blue); cursor: pointer; background: none; border: none; font-family: var(--font); display: flex; align-items: center; gap: 4px; }
+.result-card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); overflow: hidden; margin-bottom: 12px; }
+.result-card-head { padding: 1.25rem 1.5rem; background: var(--navy); display: flex; align-items: center; gap: 14px; }
+.result-avatar-lg { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; flex-shrink: 0; }
+.result-name { font-size: 18px; font-weight: 700; color: white; }
+.result-nivel { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+.result-body { padding: 1.25rem 1.5rem; display: grid; gap: 12px; }
+.result-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+.result-row:last-child { border-bottom: none; }
+.result-row-label { font-size: 13px; color: var(--gray-600); }
+.result-row-val { font-size: 15px; font-weight: 700; font-family: var(--mono); color: var(--gray-800); }
+.result-comissao-box { background: linear-gradient(135deg, var(--navy) 0%, #1e40af 100%); border-radius: var(--radius-lg); padding: 1.5rem; text-align: center; margin-top: 4px; }
+.result-comissao-label { font-size: 12px; color: rgba(255,255,255,.6); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .08em; }
+.result-comissao-val { font-size: 36px; font-weight: 700; color: white; font-family: var(--mono); }
+.result-comissao-sub { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 6px; }
+.result-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.result-tab-btn { flex: 1; padding: 8px; font-size: 12px; font-weight: 600; font-family: var(--font); border: 1.5px solid var(--gray-200); border-radius: 8px; cursor: pointer; background: white; color: var(--gray-600); transition: all .15s; }
+.result-tab-btn.active { border-color: var(--navy); background: var(--navy); color: white; }
+
+
+/* ── GESTOR */
+.gestor-login-screen { max-width: 420px; margin: 2rem auto; }
+.gestor-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 1.25rem; }
+.gestor-kpi { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 1.1rem 1.25rem; border-top: 3px solid var(--navy); }
+.gestor-kpi-label { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+.gestor-kpi-val { font-size: 22px; font-weight: 700; color: var(--navy); font-family: var(--mono); }
+.gestor-kpi-sub { font-size: 11px; color: var(--gray-400); margin-top: 3px; }
+.bonus-box { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); border-radius: var(--radius-lg); padding: 1.5rem; text-align: center; margin-bottom: 1.25rem; box-shadow: var(--shadow-lg); }
+.bonus-box-label { font-size: 12px; color: rgba(255,255,255,.7); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+.bonus-box-val { font-size: 32px; font-weight: 700; color: white; font-family: var(--mono); }
+.bonus-box-sub { font-size: 12px; color: rgba(255,255,255,.6); margin-top: 6px; }
+.gestor-section-title { font-size: 13px; font-weight: 600; color: var(--gray-600); margin-bottom: 10px; text-transform: uppercase; letter-spacing: .05em; }
+.gestor-comissao-final { background: linear-gradient(135deg, var(--navy) 0%, #1e3a8a 100%); border-radius: var(--radius-lg); padding: 2rem; text-align: center; box-shadow: var(--shadow-lg); margin-bottom: 1.25rem; }
+.gestor-comissao-final-label { font-size: 13px; color: rgba(255,255,255,.6); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+.gestor-comissao-final-val { font-size: 48px; font-weight: 700; color: white; font-family: var(--mono); }
+.gestor-comissao-final-sub { font-size: 12px; color: rgba(255,255,255,.4); margin-top: 8px; }
+.gestor-detail-card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 1.25rem; }
+.gestor-detail-head { background: var(--navy); padding: 12px 16px; font-size: 13px; font-weight: 600; color: white; }
+.gestor-detail-body { padding: 0; }
+.gestor-detail-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 16px; border-bottom: 1px solid var(--gray-100); font-size: 13px; }
+.gestor-detail-row:last-child { border-bottom: none; }
+.gestor-detail-label { color: var(--gray-600); }
+.gestor-detail-val { font-weight: 700; font-family: var(--mono); color: var(--gray-800); }
+.gestor-team-card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; }
+
+
+
+
+/* ── BACKLOG */
+.backlog-header-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:8px; }
+.backlog-stats { display:flex; gap:10px; flex-wrap:wrap; }
+.backlog-stat { background:white; border-radius:var(--radius); box-shadow:var(--shadow); padding:8px 16px; text-align:center; }
+.backlog-stat-val { font-size:20px; font-weight:700; font-family:var(--mono); }
+.backlog-stat-lbl { font-size:10px; color:var(--gray-400); text-transform:uppercase; letter-spacing:.05em; }
+.backlog-filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+.backlog-card { background:white; border-radius:var(--radius-lg); box-shadow:var(--shadow); overflow:hidden; }
+.backlog-card-head { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--navy); }
+.backlog-card-title { font-size:14px; font-weight:600; color:white; }
+.backlog-count-badge { font-size:11px; background:rgba(255,255,255,.15); color:white; padding:2px 10px; border-radius:99px; }
+table.backlog-table { width:100%; border-collapse:collapse; font-size:12px; }
+table.backlog-table thead th { background:var(--gray-50); color:var(--gray-400); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; padding:9px 14px; text-align:left; border-bottom:1px solid var(--gray-100); }
+table.backlog-table tbody tr { border-bottom:1px solid var(--gray-100); transition:background .1s; }
+table.backlog-table tbody tr:last-child { border-bottom:none; }
+table.backlog-table tbody tr:hover { background:var(--blue-lt); }
+table.backlog-table tbody td { padding:10px 14px; vertical-align:middle; }
+.etapa-badge { font-size:11px; font-weight:700; padding:3px 10px; border-radius:99px; white-space:nowrap; cursor:default; }
+.etapa-pendente  { background:#FEF3C7; color:#b45309; }
+.etapa-realizado { background:#DCFCE7; color:#15803d; }
+.etapa-andamento { background:#DBEAFE; color:#1d4ed8; }
+.btn-backlog-edit { background:none; border:1px solid var(--gray-200); border-radius:6px; padding:3px 8px; cursor:pointer; font-size:11px; color:var(--gray-600); font-family:var(--font); transition:all .15s; display:inline-flex; align-items:center; gap:4px; }
+.btn-backlog-edit:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-lt); }
+.btn-backlog-edit:disabled { opacity:.35; cursor:not-allowed; }
+.backlog-motivo-text { font-size:11px; color:var(--gray-600); max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; }
+.backlog-empty { text-align:center; padding:3rem; color:var(--gray-400); }
+/* backlog modal */
+.bk-overlay { position:fixed; inset:0; background:rgba(15,31,61,.55); z-index:500; display:none; align-items:center; justify-content:center; backdrop-filter:blur(3px); }
+.bk-overlay.open { display:flex; }
+.bk-modal { background:white; border-radius:var(--radius-lg); width:440px; max-width:95vw; box-shadow:var(--shadow-lg); overflow:hidden; animation:slideUp .2s ease; }
+.bk-modal-head { background:var(--navy); padding:1rem 1.25rem; display:flex; align-items:center; justify-content:space-between; }
+.bk-modal-title { font-size:14px; font-weight:600; color:white; }
+.bk-modal-store { font-size:11px; color:var(--gray-400); margin-top:2px; }
+.bk-modal-body { padding:1.25rem; display:grid; gap:12px; }
+.bk-field label { display:block; font-size:11px; font-weight:600; color:var(--gray-400); text-transform:uppercase; letter-spacing:.05em; margin-bottom:5px; }
+.bk-field select, .bk-field textarea { width:100%; font-size:13px; font-family:var(--font); padding:8px 11px; border:1px solid var(--gray-200); border-radius:8px; outline:none; transition:border .15s; color:var(--gray-800); background:white; }
+.bk-field select:focus, .bk-field textarea:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+.bk-field textarea { resize:vertical; min-height:80px; }
+.bk-modal-foot { padding:.9rem 1.25rem; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--gray-100); }
+.bk-exec-info { font-size:11px; color:var(--gray-400); font-style:italic; }
+.bk-locked-msg { background:var(--amber-lt); color:var(--amber); border-radius:8px; padding:8px 12px; font-size:12px; font-weight:500; }
+
+
+/* ── GLOBAL MONTH SELECTOR */
+.global-month-bar { background:white; border-radius:var(--radius); box-shadow:var(--shadow); padding:8px 14px; margin-bottom:1rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.global-month-label { font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap; }
+.gmonth-chip { font-size:12px;font-weight:500;padding:5px 14px;border-radius:99px;cursor:pointer;border:1.5px solid var(--gray-200);background:none;color:var(--gray-600);font-family:var(--font);transition:all .15s; }
+.gmonth-chip:hover { border-color:var(--blue);color:var(--blue); }
+.gmonth-chip.active { background:var(--navy);color:white;border-color:var(--navy); }
+
+
+/* ── GESTOR MGMT PANEL */
+.mgmt-section { margin-top: 1.5rem; }
+.mgmt-section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px; flex-wrap:wrap; gap:8px; }
+.mgmt-section-title { font-size:14px; font-weight:700; color:var(--navy); display:flex; align-items:center; gap:8px; }
+.mgmt-card { background:white; border-radius:var(--radius-lg); box-shadow:var(--shadow); overflow:hidden; margin-bottom:1.25rem; }
+.mgmt-card-head { background:var(--navy); padding:10px 16px; display:flex; align-items:center; justify-content:space-between; }
+.mgmt-card-head-title { font-size:13px; font-weight:600; color:white; }
+.mgmt-inline-edit { display:flex; align-items:center; gap:6px; }
+.mgmt-inline-input { font-size:12px; font-family:var(--font); padding:4px 8px; border:1.5px solid var(--gray-200); border-radius:6px; width:120px; outline:none; color:var(--gray-800); }
+.mgmt-inline-input:focus { border-color:var(--blue); }
+.mgmt-save-btn { font-size:11px; font-family:var(--font); padding:4px 10px; background:var(--green); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; }
+.mgmt-save-btn:hover { opacity:.85; }
+.mgmt-del-btn { font-size:11px; font-family:var(--font); padding:4px 8px; background:none; color:var(--red); border:1px solid var(--red); border-radius:6px; cursor:pointer; }
+.mgmt-del-btn:hover { background:var(--red-lt); }
+table.mgmt-table { width:100%; border-collapse:collapse; font-size:12px; }
+table.mgmt-table thead th { background:var(--gray-50); color:var(--gray-400); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; padding:8px 12px; text-align:left; border-bottom:1px solid var(--gray-100); white-space:nowrap; }
+table.mgmt-table tbody tr { border-bottom:1px solid var(--gray-100); }
+table.mgmt-table tbody tr:last-child { border-bottom:none; }
+table.mgmt-table tbody tr:hover { background:var(--gray-50); }
+table.mgmt-table tbody td { padding:8px 12px; vertical-align:middle; }
+.add-row-form { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; padding:1rem; background:var(--gray-50); border-top:1px solid var(--gray-100); }
+.add-row-form input, .add-row-form select { font-size:12px; font-family:var(--font); padding:7px 10px; border:1.5px solid var(--gray-200); border-radius:8px; outline:none; color:var(--gray-800); background:white; width:100%; }
+.add-row-form input:focus, .add-row-form select:focus { border-color:var(--blue); }
+.add-row-btn { background:var(--navy); color:white; border:none; border-radius:8px; padding:8px 16px; font-size:12px; font-weight:600; font-family:var(--font); cursor:pointer; white-space:nowrap; }
+.add-row-btn:hover { opacity:.85; }
+.mgmt-tabs { display:flex; gap:6px; margin-bottom:1rem; flex-wrap:wrap; }
+.mgmt-tab-btn { font-size:12px; font-weight:500; font-family:var(--font); padding:6px 14px; border-radius:99px; cursor:pointer; border:1.5px solid var(--gray-200); background:none; color:var(--gray-600); transition:all .15s; }
+.mgmt-tab-btn.active { background:var(--navy); color:white; border-color:var(--navy); }
+
+/* ── RESPONSIVE */
+@media (max-width: 900px) {
+  .charts-row { grid-template-columns: 1fr; }
+  .evo-grid { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .topbar-sub { display: none; }
+}
+@media (max-width: 600px) {
+  .page { padding: 1rem; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .controls { gap: 6px; }
+  .month-chip { font-size: 11px; padding: 4px 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo" style="background:none;padding:0;overflow:hidden;">
+      <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCABQAFADASIAAhEBAxEB/8QAHAAAAQUBAQEAAAAAAAAAAAAABAABAwUHCAIG/8QAQRAAAgECBAIGBQcKBwAAAAAAAQIDBBEABRIhBgcTMUFRYXEUIjJCgQgjQ1JicpEVFxg0gpOhwdLTJDNzg5Kx0f/EABcBAQEBAQAAAAAAAAAAAAAAAAABAwL/xAAcEQEBAAMAAwEAAAAAAAAAAAABAAIRMSFBoVH/2gAMAwEAAhEDEQA/AORcPhsLCSwTRUNZWsRSU0s2n2iq7L5nqHxxLFDBSxLNVx9LK4vFT3sCPrORuB4dZx4rKmqrFVKmY9CvswR+rGvko2wlOcqEe1TmuVU7dqtU6yPPQGwhlcT7QZ1lErfV9IMZP/NQP44CSOJdhGMOyRHrjX4YSlrsurqFVeqppI429mTZkbyYXU/jgXBVDU1eXOxy+peIMLPGbNG47mU7EeYwSsNPmtxRQClrwLmlU3SbvMV9w32De/YezCVXh8NhYSWCqNY0V6qYBlj2VT7zHqHkOs4F6t8HM0dNPSxzRs6RAPIgsCxO56/gPhgy2jk7ydj4v4WfPs4laJpqlki9ViXCgazs6gAEhRsbkN3DH2bfJ4yAD9akv/pv/fxleS88uL8myakyrLqqKClpYRFEgy+A2G53J3JJJJJ7ScahyJ5k8c8ccXpFV1dO+V0cMlRWK2XwqXAAVVDLuLuyDyDd2MU/d/bS9/o85CB+sv8Au3/v4X6O+Q2FqpifGOT+/jSOZ3E7cJ8FV2cRSQrVhlp6MyoGTpn94r2hEV3I+zjBBzk5nT07LrmWORCNUNNSwSgEe69yUa3ba488c5OOPX61BaPmTwDwNwWrQTV8dRXROoqItEumAHfSxWc3lI6ohdu1tC74x7O5qCqzB5sqomy+nBHQxmZpGFveLE9ZO+2w7O/FpnVHxPm1UJqqgcKpPRxLIuiME3NrsSSTuWJLMdyScBDhzPSdssk/eJ/Vi4OI7cvtMtvgKCuYV9J+UgAtQriOsUC12PVIB9re/j54AxbLl1flmYQ0+Y0slOmYQlFD29dSbK4sTtqA38MVJBBIYWI2ONhE2WfJrXIXvIGCcya9fP3ayMCsdI1Ds3wTmg018pG4Y6gfA7/zxZQDchVFyTsO/wAMdhfJq4aHD/LhK+VQtTmz9MTb6FNSx/BmMr+TLjlzl1kFRxNxhl2T03qyVM6xh/qXO7fsqGb9nHctTPluRZNLUyp0GVZXSFyg92CJNl8yqhfM44y7dHLDvlJ5tPnPF2U8F5epnamCmSJd9dRNpOn4J0Kf7zY1uWPhzgXg6mGaTrFQ5dHFSGZY2cyynrIVLli7a22HVe/VjGORdFWcWc1My4xzT1mo3eqdrXBqZGYKB5MZCPCFfDGx8weDk4yy2joaqeogpKaSSQpHYiYumj1gVPUpa1j7xxme0u38qf8AOpyzJ2zKqB7ScuqP6cZRzl5xQ1kc+S8PUwio3Gl1dfnJx3zbnQvdCpufpDb1MfQ8T8muX3DOXCuzmqkiViRFDHGjTTsBcrGthew3LEhVG7EDGCcUVnD6iahybLKUkyX9KGq8ajqRSDZz3vYA+6LesW1dTxrdSVFXPU1vplTK0s5kVmZus2It5AdQA2A2GHzFQuY1KjYCVv8AvHikTpKmKP6zqD5X3w1TJ0tRLL9dy34nG/LKjwTN89QQzi5aL5mX4eyfiNvhgfElNN0EhZlMkTjTKgO7L3jxHWMJW/AvEmYcK8RUub5dU+jTwSB0k06gpsR6w95SCVZe0E23tjoLm7zNy/P+VlHDk5Wnr81nVK2kLajT9GVbRftR5GiZW7UB8ccy1cHQlWRxLC4vHIvUw/ke8YKoM0kiSGnm0vBGTY6LsAQQB3lRqYhftG1r4zzxel3inu7H5FcPw8Oct6E1B6GXMF9PqJH20Rlfm9XlEoc+LtjnbmVzO4jrOMa6qy3OcypaaV+kjgStlRIUP+WgVWAFo9F/tFsbLxdzSynN+TU9ZTdFSZhVoKKro43v0KaNcrxntjeNdKHs6TSdxjk+qmkqamWplIMkrl3t3k3OJibdRdVtnfFOe51GUzHMaio1KFdpZnd3UG4Qs5J0g76b2vvYnFMOvfDDE1NAZWJJCIou7nqUd+NADlyu6WmPQxSVHUbGOP7xG5+Av+IwPiWokWVwI1KxILRqeu3aT4n/AMHZiO2LSWFhYWEvcE7walVVkhf24X9lvEdx8RiToaWob/DVAhc/Q1B0keTdR/hiDDFQRYgEYStB+V4sqky/0VngcizhNRVdWoqGHulgCR3jzuCuX1rC4pZQO9lsPxOIFQJ7BZPusRhMgb2y7/eYnEAOVXcQYaeAkVNQruPooSHY+Z6h+OPE0zyoselYoVN1jXqv3k9pxGAFFgAB4Ye2LSWFhYWEv//Z" alt="Team Freitas" style="width:36px;height:36px;object-fit:cover;border-radius:50%;">
+    </div>
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;">
+          <div class="topbar-title">Team Freitas</div>
+          <div style="background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;letter-spacing:.05em;">ZIG</div>
+        </div>
+        <div class="topbar-sub">Dashboard TPV · Monitoramento de Performance</div>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFile(this)">
+  </div>
+</header>
+
+<div class="page" id="app">
+
+  <!-- UPLOAD -->
+  <div class="upload-zone" id="upload-zone"
+    ondragover="e.preventDefault();this.classList.add('drag')"
+    ondragleave="this.classList.remove('drag')"
+    ondrop="handleDrop(event)"
+    onclick="triggerUpload()">
+    <div class="upload-icon">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+    </div>
+    <div class="upload-title">Arraste sua planilha aqui</div>
+    <div class="upload-sub">ou clique para selecionar o arquivo</div>
+    <button class="btn btn-accent" style="margin: 0 auto;" onclick="loadDemo(event)">
+      ▶ Ver com dados de demonstração
+    </button>
+    <div class="upload-hint">Formatos aceitos: .xlsx · .xls · .csv — Colunas: Nome | Mês | TPV Hubspot | TPV Real | TPV Realizado</div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" style="display:none">
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('visao',this)">Visão do Mês</button>
+      <button class="tab-btn" onclick="switchTab('evolucao',this)">Evolução Anual</button>
+      <button class="tab-btn" onclick="switchTab('backlog',this)">📋 Backlog</button>
+      <button class="tab-btn" onclick="switchTab('motivos',this)">Motivos Pendentes</button>
+      <button class="tab-btn" onclick="switchTab('comissoes',this)">📊 Resultado Mês</button>
+      <button class="tab-btn" onclick="switchTab('minhacomissao',this)">🔐 Minha Comissão</button>
+      <button class="tab-btn" onclick="switchTab('gestor',this)">👑 Gestor</button>
+    </div>
+
+
+      <!-- GLOBAL MONTH BAR -->
+      <div class="global-month-bar" id="global-month-bar">
+        <span class="global-month-label">📅 Mês</span>
+        <div id="global-month-chips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      </div>
+    <!-- TAB: VISÃO DO MÊS -->
+    <div id="tab-visao" class="tab-pane active">
+      <!-- DATE BAR -->
+      <div class="date-bar" id="date-bar">
+        <div>
+          <div class="date-bar-title">⏱ Período de Apuração <span style="font-size:10px;color:var(--gray-400);font-weight:400;">(mês seguinte ao de implantação)</span></div>
+        </div>
+        <div class="date-field">
+          <label>Início:</label>
+          <input type="date" id="dt-inicio" onchange="updateDateCalc()">
+        </div>
+        <div class="date-field">
+          <label>Hoje / Atualização:</label>
+          <input type="date" id="dt-hoje" onchange="updateDateCalc()">
+        </div>
+        <div class="date-field">
+          <label>Fim do período:</label>
+          <input type="date" id="dt-fim" onchange="updateDateCalc()">
+        </div>
+        <div class="divider-v"></div>
+        <div class="date-stat">
+          <div class="date-stat-val" id="dias-passados">—</div>
+          <div class="date-stat-lbl">dias passados</div>
+        </div>
+        <div class="date-stat">
+          <div class="date-stat-val" id="dias-totais">—</div>
+          <div class="date-stat-lbl">dias totais</div>
+        </div>
+        <div class="date-stat" style="color:var(--blue)">
+          <div class="date-stat-val" id="pct-periodo" style="color:var(--blue)">—</div>
+          <div class="date-stat-lbl">do período</div>
+        </div>
+        <div class="divider-v"></div>
+        <div class="date-progress" style="min-width:140px;">
+          <div class="date-progress-label">
+            <span>Progresso do período</span>
+            <span id="prog-label">—</span>
+          </div>
+          <div class="date-progress-bar-bg">
+            <div class="date-progress-bar" id="prog-bar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" id="search" placeholder="Buscar estabelecimento..." oninput="renderTable()">
+        </div>
+        <select class="filter" id="filter-exec" onchange="renderTable()">
+          <option value="">Todos os executivos</option>
+          <option>MILENA SANTOS</option>
+          <option>NATALIE STEFFANINI</option>
+          <option>KAIQUE OLIVEIRA</option>
+          <option>GUSTAVO MATHEUS</option>
+          <option>IGOR LUIS</option>
+          <option>RENATO PASSARETI</option>
+          <option>CHARLES CIPRIANO</option>
+        </select>
+        <select class="filter" id="filter-status" onchange="renderTable()">
+          <option value="">Todos os status</option>
+          <option value="ok">✅ Acima de 80%</option>
+          <option value="warn">⚠ Entre 50–80%</option>
+          <option value="danger">🔴 Abaixo de 50%</option>
+        </select>
+        <select class="filter" id="sort-by" onchange="renderTable()">
+          <option value="pct-desc">Maior % primeiro</option>
+          <option value="pct-asc">Menor % primeiro</option>
+          <option value="gap-desc">Maior gap</option>
+          <option value="nome">Nome A–Z</option>
+        </select>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid" id="kpi-grid"></div>
+
+      <!-- Charts -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title">% Realização por Estabelecimento</div>
+          <div style="position:relative;" id="bar-wrap"><canvas id="barChart" role="img" aria-label="Gráfico de barras com % de realização por estabelecimento"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Distribuição de Status</div>
+          <div style="position:relative;height:200px;"><canvas id="doughnutChart" role="img" aria-label="Gráfico de rosca com distribuição de status"></canvas></div>
+          <div id="donut-legend" style="margin-top:12px;display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title">Estabelecimentos</span>
+          <span class="table-count" id="table-count">0 registros</span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                ${currentMonth==='TODOS'?'<th>Mês</th>':''}
+                <th>Estabelecimento</th>
+                <th>Executivo</th>
+                <th>TPV Hubspot</th>
+                <th>TPV Real</th>
+                <th>Realizado</th>
+                <th>Status</th>
+                <th style="min-width:170px;text-align:left;padding-left:14px">Justificativa</th>
+              </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: EVOLUÇÃO ANUAL -->
+    <div id="tab-evolucao" class="tab-pane">
+      <div class="evo-grid">
+        <div class="chart-card">
+          <div class="chart-title">% Médio de Realização — Todos os Meses</div>
+          <div style="position:relative;height:260px;"><canvas id="lineChart" role="img" aria-label="Linha de evolução mensal do % médio de realização"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">TPV Consolidado por Mês (R$)</div>
+          <div style="position:relative;height:260px;"><canvas id="lineChart2" role="img" aria-label="Linhas de TPV Hubspot, Real e Realizado por mês"></canvas></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Resumo por Mês</span></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Mês</th><th>Estabelecimentos</th><th>TPV Hubspot</th>
+              <th>TPV Real</th><th>TPV Realizado</th>
+              <th>% Médio Real.</th><th>Acima 80%</th><th>Críticos</th>
+            </tr></thead>
+            <tbody id="evo-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- TAB: BACKLOG -->
+    <div id="tab-backlog" class="tab-pane">
+
+      <div class="backlog-header-bar">
+        <div>
+          <div style="font-size:16px;font-weight:600;color:var(--gray-800);">📋 Backlog de Pendências</div>
+          <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">Casas abaixo de 80% de realização — acompanhe e atualize o status</div>
+        </div>
+        <div class="backlog-stats" id="backlog-stats"></div>
+      </div>
+
+      <div class="backlog-filters">
+        <select class="filter" id="bk-filter-mes" onchange="renderBacklog()">
+          <option value="TODOS">Todos os meses</option>
+        </select>
+        <select class="filter" id="bk-filter-exec" onchange="renderBacklog()">
+          <option value="">Todos os executivos</option>
+          <option>MILENA SANTOS</option>
+          <option>NATALIE STEFFANINI</option>
+          <option>KAIQUE OLIVEIRA</option>
+          <option>GUSTAVO MATHEUS</option>
+          <option>IGOR LUIS</option>
+          <option>RENATO PASSARETI</option>
+          <option>CHARLES CIPRIANO</option>
+        </select>
+        <select class="filter" id="bk-filter-etapa" onchange="renderBacklog()">
+          <option value="">Todas as etapas</option>
+          <option value="Pendente">Pendente</option>
+          <option value="Em andamento">Em andamento</option>
+          <option value="Realizado">Realizado</option>
+        </select>
+        <div class="search-wrap" style="flex:1;min-width:160px;">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" id="bk-search" placeholder="Buscar estabelecimento..." oninput="renderBacklog()">
+        </div>
+      </div>
+
+      <div class="backlog-card">
+        <div class="backlog-card-head">
+          <span class="backlog-card-title">Estabelecimentos Pendentes</span>
+          <span class="backlog-count-badge" id="bk-count">0 casas</span>
+        </div>
+        <div class="tbl-wrap">
+          <table class="backlog-table">
+            <thead><tr>
+              <th>Mês</th>
+              <th>Estabelecimento</th>
+              <th>Realizado</th>
+              <th>% Real.</th>
+              <th>Etapa</th>
+              <th style="min-width:180px">Motivo da Pendência</th>
+              <th>Ação</th>
+            </tr></thead>
+            <tbody id="backlog-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: MOTIVOS PENDENTES -->
+    <div id="tab-motivos" class="tab-pane">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <span style="font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.06em;">Mês</span>
+        <div id="motivos-month-chips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-title">Pendentes de Justificativa</span>
+          <span class="table-count" id="pending-count">0</span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Mês</th><th>Estabelecimento</th><th>TPV Hubspot</th>
+              <th>TPV Real</th><th>% Realização</th><th>Ação</th>
+            </tr></thead>
+            <tbody id="pending-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- TAB: COMISSÕES -->
+    <div id="tab-comissoes" class="tab-pane">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-size:16px;font-weight:600;color:var(--gray-800);">📊 Resultado do Mês</div>
+          <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">Atingimento de metas — valores de comissão visíveis apenas no acesso individual</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <select class="filter" id="filter-exec-mes" onchange="renderComissoes()">
+            <option value="TODOS">Todos os meses</option>
+          </select>
+        </div>
+      </div>
+      <div class="exec-grid" id="exec-grid"></div>
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Tabela de Faixas de Atingimento</span></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Nível de Atingimento</th>
+              <th>Multiplicador MRR</th>
+              <th>Multiplicador One-Shot</th>
+              <th>Descrição</th>
+            </tr></thead>
+            <tbody>
+              <tr><td>&lt; 60%</td><td>0</td><td>0</td><td style="color:var(--red)">Sem comissão</td></tr>
+              <tr><td>60% – 69%</td><td>0,6</td><td>0,6</td><td style="color:var(--amber)">Parcial mínimo</td></tr>
+              <tr><td>70% – 79%</td><td>0,7</td><td>0,7</td><td style="color:var(--amber)">Parcial</td></tr>
+              <tr><td>80% – 89%</td><td>0,9</td><td>0,9</td><td style="color:var(--blue)">Bom</td></tr>
+              <tr><td>90% – 99%</td><td>0,95</td><td>0,95</td><td style="color:var(--blue)">Muito bom</td></tr>
+              <tr><td>100% – 120%</td><td>1,1</td><td>1,1</td><td style="color:var(--green)">Meta atingida</td></tr>
+              <tr><td>≥ 120%</td><td>1,2</td><td>1,2</td><td style="color:var(--green)">Superou a meta</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: MINHA COMISSÃO -->
+    <div id="tab-minhacomissao" class="tab-pane">
+      <div class="login-screen" id="login-screen">
+        <div class="login-card">
+          <div class="login-head">
+            <div style="font-size:32px;margin-bottom:8px;">🔐</div>
+            <div class="login-head-title">Área do Executivo</div>
+            <div class="login-head-sub">Acesse com suas credenciais para ver sua comissão</div>
+          </div>
+          <div class="login-body">
+            <div class="login-field">
+              <label>Seu nome</label>
+              <select id="login-exec">
+                <option value="">Selecione seu nome...</option>
+                <option value="MILENA SANTOS">Milena Santos</option>
+                <option value="NATALIE STEFFANINI">Natalie Steffanini</option>
+                <option value="KAIQUE OLIVEIRA">Kaique Oliveira</option>
+                <option value="GUSTAVO MATHEUS">Gustavo Matheus</option>
+                <option value="IGOR LUIS">Igor Luis</option>
+                <option value="RENATO PASSARETI">Renato Passareti</option>
+                <option value="CHARLES CIPRIANO">Charles Cipriano</option>
+              </select>
+            </div>
+            <div class="login-field">
+              <label>Senha</label>
+              <input type="password" id="login-senha" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')doLogin()">
+            </div>
+            <div class="login-error" id="login-error">Senha incorreta. Tente novamente.</div>
+            <button class="btn-login" onclick="doLogin()">Entrar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-screen" id="result-screen">
+        <div class="result-header">
+          <button class="result-back" onclick="doLogout()">← Sair</button>
+          <div style="font-size:12px;color:var(--gray-400)" id="result-mes-label"></div>
+        </div>
+        <div class="result-tab-container">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+            <span style="font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em;">Mês</span>
+            <div id="exec-month-chips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+          </div>
+          <div class="result-tabs">
+            <button class="result-tab-btn active" onclick="switchResultTab('mrr',this)">MRR</button>
+            <button class="result-tab-btn" onclick="switchResultTab('oneshot',this)">One-Shot</button>
+            <button class="result-tab-btn" onclick="switchResultTab('total',this)">Total</button>
+          </div>
+        </div>
+        <div id="result-content"></div>
+      </div>
+    </div>
+
+
+    <!-- TAB: GESTOR -->
+    <div id="tab-gestor" class="tab-pane">
+
+      <!-- LOGIN GESTOR -->
+      <div class="gestor-login-screen" id="gestor-login-screen">
+        <div class="login-card">
+          <div class="login-head">
+            <div style="font-size:32px;margin-bottom:8px;">👑</div>
+            <div class="login-head-title">Área do Gestor</div>
+            <div class="login-head-sub">Acesso restrito — Guilherme Freitas</div>
+          </div>
+          <div class="login-body">
+            <div class="login-field">
+              <label>Login</label>
+              <input type="text" id="gestor-login-user" placeholder="seu.login" onkeydown="if(event.key==='Enter')doGestorLogin()">
+            </div>
+            <div class="login-field">
+              <label>Senha</label>
+              <input type="password" id="gestor-login-senha" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')doGestorLogin()">
+            </div>
+            <div class="login-error" id="gestor-login-error">Login ou senha incorretos.</div>
+            <button class="btn-login" onclick="doGestorLogin()">Entrar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAINEL GESTOR -->
+      <div id="gestor-painel" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-size:18px;font-weight:700;color:var(--navy);">👑 Guilherme Freitas — Gestor</div>
+            <div style="font-size:12px;color:var(--gray-400);margin-top:2px;" id="gestor-mes-label">Carregando...</div>
+          </div>
+          <button class="btn btn-outline" onclick="doGestorLogout()">Sair</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;background:white;padding:10px 14px;border-radius:var(--radius);box-shadow:var(--shadow);">
+          <span style="font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;">📅 Mês da Comissão</span>
+          <div id="gestor-month-chips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+        </div>
+
+        <!-- Comissão Final Destaque -->
+        <div class="gestor-comissao-final" id="gestor-comissao-final-box">
+          <div class="gestor-comissao-final-label">💰 Comissão Total do Mês</div>
+          <div class="gestor-comissao-final-val" id="gestor-total-val">R$ 0</div>
+          <div class="gestor-comissao-final-sub" id="gestor-total-sub">MRR + One-Shot + Bônus</div>
+        </div>
+
+        <!-- Bônus -->
+        <div id="gestor-bonus-box"></div>
+
+        <!-- KPIs -->
+        <div class="gestor-kpi-grid" id="gestor-kpi-grid"></div>
+
+        <!-- Detalhes MRR e One-Shot -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem;" id="gestor-detail-grid">
+          <div class="gestor-detail-card">
+            <div class="gestor-detail-head">📈 MRR</div>
+            <div class="gestor-detail-body" id="gestor-mrr-detail"></div>
+          </div>
+          <div class="gestor-detail-card">
+            <div class="gestor-detail-head">⚡ One-Shot</div>
+            <div class="gestor-detail-body" id="gestor-os-detail"></div>
+          </div>
+        </div>
+
+        <!-- Time de Executivos -->
+        <div class="gestor-section-title">Performance do Time</div>
+        <div class="gestor-team-card">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr>
+                <th>Casas</th>
+                <th>MRR Realizado</th>
+                <th>One-Shot Realizado</th>
+                <th>% MRR</th>
+                <th>% One-Shot</th>
+                <th>Comissão Total</th>
+              </tr></thead>
+              <tbody id="gestor-team-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PAINEL DE GESTÃO ══ -->
+      <div class="mgmt-section">
+        <div class="mgmt-section-header">
+          <div class="mgmt-section-title">⚙️ Painel de Gestão de Dados</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-outline" onclick="triggerUpload()" style="font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;">
+              <svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Carregar Planilha
+            </button>
+            <button class="btn btn-outline" onclick="exportCSV()" style="font-size:12px;padding:6px 12px;display:flex;align-items:center;gap:6px;">
+              <svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Exportar CSV
+            </button>
+          </div>
+          <div class="mgmt-tabs">
+            <button class="mgmt-tab-btn active" onclick="switchMgmtTab('casas',this)">🏠 Casas</button>
+            <button class="mgmt-tab-btn" onclick="switchMgmtTab('metas',this)">🎯 Metas Gestor</button>
+          </div>
+        </div>
+
+        <!-- TAB: CASAS -->
+        <div id="mgmt-tab-casas">
+          <div class="mgmt-card">
+            <div class="mgmt-card-head">
+              <span class="mgmt-card-head-title">🏠 Gerenciar Estabelecimentos</span>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <select id="mgmt-filter-mes" onchange="renderMgmtTable()" style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:white;">
+                  <option value="TODOS">Todos os meses</option>
+                </select>
+              </div>
+            </div>
+            <div class="tbl-wrap">
+              <table class="mgmt-table">
+                <thead><tr>
+                  <th>Mês</th>
+                  <th>Estabelecimento</th>
+                  <th>Executivo</th>
+                  <th>TPV Hubspot</th>
+                  <th>TPV Real</th>
+                  <th>Realizado</th>
+                  <th>MRR</th>
+                  <th>One Shot</th>
+                  <th>Ações</th>
+                </tr></thead>
+                <tbody id="mgmt-table-body"></tbody>
+              </table>
+            </div>
+            <!-- ADD NEW ROW -->
+            <div style="padding:12px 16px;background:var(--gray-50);border-top:1px solid var(--gray-100);">
+              <div style="font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">➕ Adicionar nova casa</div>
+              <div class="add-row-form">
+                <select id="new-mes">
+                  <option value="">Mês...</option>
+                  <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
+                  <option>Abril</option><option>Maio</option><option>Junho</option>
+                  <option>Julho</option><option>Agosto</option><option>Setembro</option>
+                  <option>Outubro</option><option>Novembro</option><option>Dezembro</option>
+                </select>
+                <input type="text" id="new-nome" placeholder="Nome do estabelecimento">
+                <select id="new-exec">
+                  <option value="">Executivo...</option>
+                  <option>MILENA SANTOS</option>
+                  <option>NATALIE STEFFANINI</option>
+                  <option>KAIQUE OLIVEIRA</option>
+                  <option>GUSTAVO MATHEUS</option>
+                  <option>IGOR LUIS</option>
+                  <option>RENATO PASSARETI</option>
+                  <option>CHARLES CIPRIANO</option>
+                </select>
+                <input type="number" id="new-hub" placeholder="TPV Hubspot (R$)">
+                <input type="number" id="new-real" placeholder="TPV Real (R$)">
+                <input type="number" id="new-realizado" placeholder="Realizado (R$)">
+                <input type="number" id="new-mrr" placeholder="MRR (R$)">
+                <input type="number" id="new-os" placeholder="One Shot (R$)">
+                <button class="add-row-btn" onclick="addNewCasa()">➕ Adicionar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: METAS GESTOR -->
+        <div id="mgmt-tab-metas" style="display:none;">
+          <div class="mgmt-card">
+            <div class="mgmt-card-head">
+              <span class="mgmt-card-head-title">🎯 Metas do Gestor por Mês</span>
+            </div>
+            <div style="padding:1rem;">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;" id="mgmt-metas-grid"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- ══ FIM PAINEL DE GESTÃO ══ -->
+
+    </div>
+
+  </div><!-- /dashboard -->
+</div><!-- /page -->
+
+<!-- MODAL MOTIVO -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-head-title">Registrar Justificativa</div>
+        <div class="modal-head-store" id="modal-store-name"></div>
+      </div>
+      <button class="btn-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-pct-info" id="modal-pct-info"></div>
+      <div class="field">
+        <label>Executivo Responsável</label>
+        <input type="text" id="m-exec" placeholder="Nome do executivo">
+      </div>
+      <div class="field">
+        <label>Categoria do Motivo</label>
+        <select id="m-cat">
+          <option value="">Selecione uma categoria...</option>
+          <option>Reforma / Obras</option>
+          <option>Sem estoque</option>
+          <option>Problema operacional</option>
+          <option>Sazonalidade</option>
+          <option>Concorrência</option>
+          <option>Meta superestimada</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Descrição detalhada</label>
+        <textarea id="m-text" placeholder="Descreva o motivo pelo qual o estabelecimento não está atingindo a meta informada..."></textarea>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveMotivo()">Salvar justificativa</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- BACKLOG MODAL -->
+<div class="bk-overlay" id="bk-overlay" onclick="if(event.target===this)closeBkModal()">
+  <div class="bk-modal">
+    <div class="bk-modal-head">
+      <div>
+        <div class="bk-modal-title">Atualizar Pendência</div>
+        <div class="bk-modal-store" id="bk-modal-store"></div>
+      </div>
+      <button class="btn-close" onclick="closeBkModal()">✕</button>
+    </div>
+    <div class="bk-modal-body" id="bk-modal-body">
+      <div class="bk-field">
+        <label>Etapa atual</label>
+        <select id="bk-etapa">
+          <option value="Pendente">🟡 Pendente</option>
+          <option value="Em andamento">🔵 Em andamento</option>
+          <option value="Realizado">🟢 Realizado</option>
+        </select>
+      </div>
+      <div class="bk-field">
+        <label>Motivo / Observação</label>
+        <textarea id="bk-motivo" placeholder="Descreva o motivo da pendência ou ação tomada..."></textarea>
+      </div>
+    </div>
+    <div class="bk-modal-foot">
+      <span class="bk-exec-info" id="bk-exec-info"></span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline" onclick="closeBkModal()">Cancelar</button>
+        <button class="btn btn-accent" onclick="saveBkModal()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const MONTHS_ORDER = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+let const EMBEDDED_DATA = [{"nome": "Choperia palmitense Lucas", "mes": "Janeiro", "executivo": "GUSTAVO MATHEUS", "informado": 500000.0, "real": 209992.17, "momento": 209992.17, "mrr": 2976.21, "oneshot": 2000.0, "status_impl": "IMPLANTADA"}, {"nome": "Choperia palmitense Sinop", "mes": "Janeiro", "executivo": "GUSTAVO MATHEUS", "informado": 500000.0, "real": 139825.01, "momento": 139825.01, "mrr": 4009.26, "oneshot": 11000.0, "status_impl": "IMPLANTADA"}, {"nome": "QUIOSQUE DO SOLON", "mes": "Janeiro", "executivo": "CHARLES CIPRIANO", "informado": 90000.0, "real": 163318.63, "momento": 163318.63, "mrr": 5635.69, "oneshot": 5200.0, "status_impl": "IMPLANTADA"}, {"nome": "Essepę", "mes": "Janeiro", "executivo": "KAIQUE OLIVEIRA", "informado": 120000.0, "real": 175724.59, "momento": 175724.59, "mrr": 5939.62, "oneshot": 8892.48, "status_impl": "IMPLANTADA"}, {"nome": "PARADA OBRIGATORIA", "mes": "Janeiro", "executivo": "GUSTAVO MATHEUS", "informado": 80000.0, "real": 51212.51, "momento": 51212.51, "mrr": 1736.23, "oneshot": 9400.0, "status_impl": "IMPLANTADA"}, {"nome": "Estancia Casa Na Arvore", "mes": "Janeiro", "executivo": "NATALIE STEFFANINI", "informado": 30000.0, "real": 27545.9, "momento": 27545.9, "mrr": 1136.78, "oneshot": 2800.0, "status_impl": "IMPLANTADA"}, {"nome": "Beco Bar Porto Velho", "mes": "Janeiro", "executivo": "NATALIE STEFFANINI", "informado": 150000.0, "real": 56917.5, "momento": 56917.5, "mrr": 2034.32, "oneshot": 5137.0, "status_impl": "IMPLANTADA"}, {"nome": "Caipirao Beer - Rio Preto", "mes": "Janeiro", "executivo": "RENATO PASSARETI", "informado": 250000.0, "real": 36391.48, "momento": 36391.48, "mrr": 1350.0, "oneshot": 10500.0, "status_impl": "IMPLANTADA"}, {"nome": "SANTO CHOPP CAIEIRAS", "mes": "Janeiro", "executivo": "NATALIE STEFFANINI", "informado": 90000.0, "real": 7935.35, "momento": 7935.35, "mrr": 800.0, "oneshot": 2700.0, "status_impl": "IMPLANTADA"}, {"nome": "The Vinil Pub", "mes": "Janeiro", "executivo": "KAIQUE OLIVEIRA", "informado": 80000.0, "real": 52553.22, "momento": 52553.22, "mrr": 1789.0, "oneshot": 4600.0, "status_impl": "IMPLANTADA"}, {"nome": "Mirante Atins", "mes": "Fevereiro", "executivo": "CHARLES CIPRIANO", "informado": 50000.0, "real": 24882.7, "momento": 24882.7, "mrr": 750.0, "oneshot": 5000.0, "status_impl": ""}, {"nome": "Sushi Rancharia INT Atins", "mes": "Fevereiro", "executivo": "CHARLES CIPRIANO", "informado": 50000.0, "real": 16532.08, "momento": 16532.08, "mrr": 750.0, "oneshot": 5000.0, "status_impl": ""}, {"nome": "Sushi Rancharia EXT Atins", "mes": "Fevereiro", "executivo": "CHARLES CIPRIANO", "informado": 50000.0, "real": 1025.4, "momento": 1025.4, "mrr": 750.0, "oneshot": 5000.0, "status_impl": ""}, {"nome": "ÇA-VÁ RESTAURANTE ATINS", "mes": "Fevereiro", "executivo": "CHARLES CIPRIANO", "informado": 400000.0, "real": 90583.9, "momento": 90583.9, "mrr": 1757.46, "oneshot": 6000.0, "status_impl": ""}, {"nome": "BEACH BAR ATINS", "mes": "Fevereiro", "executivo": "CHARLES CIPRIANO", "informado": 600000.0, "real": 134801.51, "momento": 134801.51, "mrr": 2615.28, "oneshot": 19000.0, "status_impl": ""}, {"nome": "CERVEJARIA 4-6-2 BREWPUB", "mes": "Fevereiro", "executivo": "NATALIE STEFFANINI", "informado": 90000.0, "real": 73888.11, "momento": 73888.11, "mrr": 2475.34, "oneshot": 4400.0, "status_impl": ""}, {"nome": "BEBE E VAZA", "mes": "Fevereiro", "executivo": "NATALIE STEFFANINI", "informado": 150000.0, "real": 5853.06, "momento": 5853.06, "mrr": 850.47, "oneshot": 2144.0, "status_impl": ""}, {"nome": "Canto Gourmet", "mes": "Fevereiro", "executivo": "NATALIE STEFFANINI", "informado": 150000.0, "real": 81660.1, "momento": 81660.1, "mrr": 2029.15, "oneshot": 3188.0, "status_impl": ""}, {"nome": "CASTER CLUB - VILA FORMOSA", "mes": "Fevereiro", "executivo": "RENATO PASSARETI", "informado": 1000000.0, "real": 2063058.0, "momento": 2063058.0, "mrr": 15778.0, "oneshot": 37050.0, "status_impl": ""}, {"nome": "Queijaria", "mes": "Março", "executivo": "NATALIE STEFFANINI", "informado": 400000.0, "real": 372334.31, "momento": 372334.31, "mrr": 6292.67, "oneshot": 8400.0, "status_impl": "IMPLANTADA"}, {"nome": "Flamula", "mes": "Março", "executivo": "NATALIE STEFFANINI", "informado": 200000.0, "real": 123500.78, "momento": 123500.78, "mrr": 3861.01, "oneshot": 6360.0, "status_impl": "IMPLANTADA"}, {"nome": "ESQUINA BAR BRASA MUSICA E AMIGOS", "mes": "Março", "executivo": "NATALIE STEFFANINI", "informado": 50000.0, "real": 102.0, "momento": 102.0, "mrr": 91.93, "oneshot": 4898.0, "status_impl": "IMPLANTADA"}, {"nome": "Ginástico Club", "mes": "Março", "executivo": "NATALIE STEFFANINI", "informado": 70000.0, "real": 72800.17, "momento": 72800.17, "mrr": 2500.96, "oneshot": 3245.0, "status_impl": "IMPLANTADA"}, {"nome": "Primeira Saida Bar e Restaurante", "mes": "Março", "executivo": "KAIQUE OLIVEIRA", "informado": 200000.0, "real": 78048.29, "momento": 78048.29, "mrr": 2221.88, "oneshot": 9500.0, "status_impl": "IMPLANTADA"}, {"nome": "Siri Jack", "mes": "Março", "executivo": "KAIQUE OLIVEIRA", "informado": 180000.0, "real": 111238.43, "momento": 111238.43, "mrr": 2439.82, "oneshot": 5125.0, "status_impl": "IMPLANTADA"}, {"nome": "Bar Da Lora", "mes": "Março", "executivo": "KAIQUE OLIVEIRA", "informado": 120000.0, "real": 242699.63, "momento": 242699.63, "mrr": 7186.39, "oneshot": 5300.0, "status_impl": "IMPLANTADA"}, {"nome": "Primavera Bar e Restaurante", "mes": "Março", "executivo": "CHARLES CIPRIANO", "informado": 75000.0, "real": 48605.49, "momento": 48605.49, "mrr": 1676.98, "oneshot": 12700.0, "status_impl": "IMPLANTADA"}, {"nome": "Ministerios palavra da vida", "mes": "Março", "executivo": "GUSTAVO MATHEUS", "informado": 70000.0, "real": 62333.33, "momento": 62333.33, "mrr": 1496.02, "oneshot": 5500.0, "status_impl": "IMPLANTADA"}, {"nome": "Beco- Bebidas e Comidas", "mes": "Março", "executivo": "GUSTAVO MATHEUS", "informado": 50000.0, "real": 24242.0, "momento": 24242.0, "mrr": 800.1, "oneshot": 1480.0, "status_impl": "IMPLANTADA"}, {"nome": "Show Bar", "mes": "Março", "executivo": "KAIQUE OLIVEIRA", "informado": 300000.0, "real": 297540.65, "momento": 297540.65, "mrr": 9848.81, "oneshot": 9800.0, "status_impl": "IMPLANTADA"}, {"nome": "Tayo Sushi", "mes": "Março", "executivo": "GUSTAVO MATHEUS", "informado": 70000.0, "real": 72094.63, "momento": 72094.63, "mrr": 2451.31, "oneshot": 3150.0, "status_impl": "IMPLANTADA"}, {"nome": "Restaurante JN", "mes": "Março", "executivo": "IGOR LUIS", "informado": 50000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 3280.0, "status_impl": "IMPLANTADA"}, {"nome": "Rocket Vaquejada", "mes": "Março", "executivo": "RENATO PASSARETI", "informado": 600000.0, "real": 465070.84, "momento": 465070.84, "mrr": 6459.83, "oneshot": 7500.0, "status_impl": "IMPLANTADA"}, {"nome": "FOGO E LENHA", "mes": "Abril", "executivo": "KAIQUE OLIVEIRA", "informado": 40000.0, "real": 15622.0, "momento": 15622.0, "mrr": 494.71, "oneshot": 1950.0, "status_impl": "IMPLANTADA"}, {"nome": "CABANA DA MARA", "mes": "Abril", "executivo": "KAIQUE OLIVEIRA", "informado": 40000.0, "real": 3832.65, "momento": 3832.65, "mrr": 128.8, "oneshot": 1950.0, "status_impl": "IMPLANTADA"}, {"nome": "O VARAL", "mes": "Abril", "executivo": "KAIQUE OLIVEIRA", "informado": 150000.0, "real": 77363.77, "momento": 77363.77, "mrr": 2486.55, "oneshot": 6000.0, "status_impl": "IMPLANTADA"}, {"nome": "MONTANHA CG", "mes": "Abril", "executivo": "KAIQUE OLIVEIRA", "informado": 50000.0, "real": 2525.52, "momento": 2525.52, "mrr": 83.31, "oneshot": 10000.0, "status_impl": "IMPLANTADA"}, {"nome": "SANTA MONICA TABOĂO", "mes": "Abril", "executivo": "NATALIE STEFFANINI", "informado": 150000.0, "real": 2744.0, "momento": 2744.0, "mrr": 91.93, "oneshot": 8739.0, "status_impl": "IMPLANTADA"}, {"nome": "BEACH CHOPP", "mes": "Abril", "executivo": "NATALIE STEFFANINI", "informado": 35000.0, "real": 10094.69, "momento": 10094.69, "mrr": 345.28, "oneshot": 6180.0, "status_impl": "IMPLANTADA"}, {"nome": "CASA ARTESANO", "mes": "Abril", "executivo": "NATALIE STEFFANINI", "informado": 90000.0, "real": 4550.71, "momento": 4550.71, "mrr": 158.84, "oneshot": 5157.0, "status_impl": "IMPLANTADA"}, {"nome": "JS LOUNGE", "mes": "Abril", "executivo": "NATALIE STEFFANINI", "informado": 40000.0, "real": 12941.0, "momento": 12941.0, "mrr": 455.55, "oneshot": 4529.0, "status_impl": "IMPLANTADA"}, {"nome": "LARGO DA CHOSEN", "mes": "Abril", "executivo": "NATALIE STEFFANINI", "informado": 200000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 3825.0, "status_impl": "IMPLANTADA"}, {"nome": "BAR DO NATANZIN", "mes": "Abril", "executivo": "CHARLES CIPRIANO", "informado": 50000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 3000.0, "status_impl": "IMPLANTADA"}, {"nome": "DON BUTEKO", "mes": "Abril", "executivo": "CHARLES CIPRIANO", "informado": 80000.0, "real": 94571.14, "momento": 94571.14, "mrr": 2423.11, "oneshot": 3250.0, "status_impl": "IMPLANTADA"}, {"nome": "VILA MOURAN", "mes": "Abril", "executivo": "CHARLES CIPRIANO", "informado": 80000.0, "real": 57957.1, "momento": 57957.1, "mrr": 1954.82, "oneshot": 8050.0, "status_impl": "IMPLANTADA"}, {"nome": "ESPAÇO VITORIA", "mes": "Abril", "executivo": "IGOR LUIS", "informado": 150000.0, "real": 33575.1, "momento": 33575.1, "mrr": 651.43, "oneshot": 6995.0, "status_impl": "IMPLANTADA"}, {"nome": "DL SERVIÇOS", "mes": "Abril", "executivo": "IGOR LUIS", "informado": 250000.0, "real": 65161.86, "momento": 65161.86, "mrr": 1420.97, "oneshot": 3000.0, "status_impl": ""}, {"nome": "Bilhares Carvalho", "mes": "Abril", "executivo": "GUSTAVO MATHEUS", "informado": 50000.0, "real": 14152.54, "momento": 14152.54, "mrr": 484.05, "oneshot": 4550.0, "status_impl": ""}, {"nome": "Duda BEER HOUSE", "mes": "Abril", "executivo": "GUSTAVO MATHEUS", "informado": 50000.0, "real": 18469.52, "momento": 18469.52, "mrr": 618.75, "oneshot": 3700.0, "status_impl": ""}, {"nome": "PLUR ARENA", "mes": "Maio", "executivo": "KAIQUE OLIVEIRA", "informado": 30000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 0.0, "status_impl": "PENDENTE"}, {"nome": "CAIANAS GASTROBAR", "mes": "Maio", "executivo": "KAIQUE OLIVEIRA", "informado": 100000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 0.0, "status_impl": "PENDENTE"}, {"nome": "ATINS BEACH BAR", "mes": "Maio", "executivo": "KAIQUE OLIVEIRA", "informado": 40000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 0.0, "status_impl": "PENDENTE"}, {"nome": "AKI ESPETO (GRU)", "mes": "Maio", "executivo": "KAIQUE OLIVEIRA", "informado": 150000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 0.0, "status_impl": "PENDENTE"}, {"nome": "VILA BEACH", "mes": "Maio", "executivo": "KAIQUE OLIVEIRA", "informado": 250000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 0.0, "status_impl": "PENDENTE"}, {"nome": "SHAKE N STIR BAR", "mes": "Maio", "executivo": "RENATO PASSARETI", "informado": 400000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 0.0, "status_impl": "PENDENTE"}, {"nome": "Nissin Miojolandia", "mes": "Maio", "executivo": "NATALIE STEFFANINI", "informado": 50000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 0.0, "status_impl": "PENDENTE"}, {"nome": "ITA PARK EMPREENDIMENTOS E DIVERÇĂO", "mes": "Maio", "executivo": "NATALIE STEFFANINI", "informado": 300000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 0.0, "status_impl": "PENDENTE"}, {"nome": "PIRATA BAR", "mes": "Maio", "executivo": "NATALIE STEFFANINI", "informado": 250000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 0.0, "status_impl": "PENDENTE"}, {"nome": "QUINTAL SANTA LUZIA MG", "mes": "Maio", "executivo": "CHARLES CIPRIANO", "informado": 75000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 0.0, "status_impl": "PENDENTE"}, {"nome": "ATINS CHARME CHALES BA", "mes": "Maio", "executivo": "CHARLES CIPRIANO", "informado": 50000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 0.0, "status_impl": "PENDENTE"}, {"nome": "LAGO AZUL ACQUA PARK", "mes": "Maio", "executivo": "GUSTAVO MATHEUS", "informado": 50000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 0.0, "status_impl": "PENDENTE"}, {"nome": "MEXE CLUB", "mes": "Maio", "executivo": "GUSTAVO MATHEUS", "informado": 300000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 0.0, "status_impl": "PENDENTE"}, {"nome": "SERIGUELA RESTAURANTE", "mes": "Maio", "executivo": "GUSTAVO MATHEUS", "informado": 75000.0, "real": 0.0, "momento": 0.0, "mrr": 0.0, "oneshot": 0.0, "status_impl": "PENDENTE"}];
+let motivos = {};
+let currentMonth = '';
+let barInst = null, donutInst = null, lineInst = null, line2Inst = null;
+let editKey = '';
+let diasPassados = 0;
+let diasTotais   = 30;
+let pctPeriodo   = 0;  // 0..1
+
+
+// ── DATE CALC
+function updateDateCalc() {
+  const inicio = document.getElementById('dt-inicio').value;
+  const hoje   = document.getElementById('dt-hoje').value;
+  const fim    = document.getElementById('dt-fim').value;
+  if (!inicio || !hoje || !fim) return;
+  const dI = new Date(inicio), dH = new Date(hoje), dF = new Date(fim);
+  diasTotais   = Math.max(1, Math.round((dF - dI) / 86400000) + 1);
+  diasPassados = Math.max(1, Math.round((dH - dI) / 86400000) + 1);
+  diasPassados = Math.min(diasPassados, diasTotais);
+  pctPeriodo   = diasPassados / diasTotais;
+
+  document.getElementById('dias-passados').textContent = diasPassados;
+  document.getElementById('dias-totais').textContent   = diasTotais;
+  document.getElementById('pct-periodo').textContent   = Math.round(pctPeriodo * 100) + '%';
+  document.getElementById('prog-label').textContent    = Math.round(pctPeriodo * 100) + '%';
+  document.getElementById('prog-bar').style.width      = Math.min(pctPeriodo * 100, 100) + '%';
+
+  renderAll();
+}
+
+// projection: at current daily pace, what will realizado be at end of period?
+function projecao(r) {
+  if (diasPassados <= 0) return r.momento;
+  const diario = r.momento / diasPassados;
+  return diario * diasTotais;
+}
+
+// % vs meta parcial: realizado vs (hubspot * pctPeriodo)
+function pctParcial(r) {
+  const metaParcial = r.informado * pctPeriodo;
+  return metaParcial > 0 ? r.momento / metaParcial : 0;
+}
+
+// status based on pace (are they on track for the full period?)
+function statusPace(r) {
+  const proj = projecao(r);
+  const p    = proj / r.informado;
+  return p >= 0.8 ? 'ok' : p >= 0.5 ? 'warn' : 'danger';
+}
+
+// ── FORMAT
+const fmtMoney = v => 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+const fmtPct   = v => Math.round(v*100) + '%';
+const pctVal   = (a,b) => b>0 ? (a/b) : 0;
+const pctReal  = r => pctVal(r.momento, r.informado);
+const status   = p => p>=.8?'ok':p>=.5?'warn':'danger';
+const barClr   = p => p>=.8?'#16A34A':p>=.5?'#D97706':'#DC2626';
+
+// ── UPLOAD
+function triggerUpload() { document.getElementById('file-input').click(); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if(f) processFile(f);
+}
+function handleFile(inp) { if(inp.files[0]) processFile(inp.files[0]); inp.value=''; }
+function processFile(f) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
+    parseData(raw);
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+// ── EXEC NAME NORMALIZATION
+const EXEC_NAME_MAP = {
+  'MILENA':           'MILENA SANTOS',
+  'NATALIE':          'NATALIE STEFFANINI',
+  'KAIQUE':           'KAIQUE OLIVEIRA',
+  'GUSTAVO':          'GUSTAVO MATHEUS',
+  'IGOR LUIS':        'IGOR LUIS',
+  'IGOR':             'IGOR LUIS',
+  'RENATO':           'RENATO PASSARETI',
+  'RENATO PASSARETI': 'RENATO PASSARETI',
+  'CHARLES':          'CHARLES CIPRIANO',
+  'CHARLES CIPRIANO': 'CHARLES CIPRIANO',
+  'MILENA SANTOS':       'MILENA SANTOS',
+  'NATALIE STEFFANINI':  'NATALIE STEFFANINI',
+  'KAIQUE OLIVEIRA':     'KAIQUE OLIVEIRA',
+  'GUSTAVO MATHEUS':     'GUSTAVO MATHEUS',
+};
+function normalizeExec(raw) {
+  if (!raw) return '';
+  const up = raw.trim().toUpperCase();
+  return EXEC_NAME_MAP[up] || raw.trim();
+}
+
+function parseData(raw) {
+  if(!raw.length){ toast('Planilha vazia ou formato inválido.'); return; }
+  const keys = Object.keys(raw[0]).map(k=>k.toLowerCase().trim());
+  const findKey = (terms) => {
+    const k = Object.keys(raw[0]).find(k => terms.some(t => k.toLowerCase().includes(t)));
+    return k || null;
+  };
+  const kNome = findKey(['nome','estabelecimento','store']);
+  const kMes  = findKey(['mês','mes','month','competencia']);
+  const kInf  = findKey(['informado']);
+  const kReal = findKey(['real']) ;
+  const kMom  = findKey(['realizado','momento','acumulado']);
+  if(!kNome||!kMes||!kInf){ toast('⚠ Colunas não identificadas. Verifique: Nome | Mês | TPV Hubspot | TPV Real | TPV Realizado'); return; }
+  const kExec = findKey(['executivo','exec','responsavel','vendedor']);
+  const kMrr  = findKey(['mrr','recorrente']);
+  const kOs   = findKey(['one shot','oneshot','one-shot']);
+  const cleanNum = v => parseFloat(String(v||'0').replace(/[^\d.,]/g,'').replace(',','.')) || 0;
+  allData = raw.map(r=>({
+    nome:      String(r[kNome]||'').trim(),
+    mes:       String(r[kMes]||'').trim(),
+    executivo: kExec ? normalizeExec(String(r[kExec]||'').trim()) : '',
+    informado: cleanNum(r[kInf]),
+    real:      kReal ? cleanNum(r[kReal]) : 0,
+    momento:   kMom  ? cleanNum(r[kMom])  : 0,
+    mrr:       kMrr  ? cleanNum(r[kMrr])  : 0,
+    oneshot:   kOs   ? cleanNum(r[kOs])   : 0,
+  })).filter(r=>r.nome&&r.mes);
+  initDashboard();
+  // Save newly uploaded data to Supabase
+  if (typeof saveAllDataToSupabase === 'function') saveAllDataToSupabase();
+}
+
+// ── DEMO DATA
+function loadDemo(e) {
+  e && e.stopPropagation();
+  allData = [...EMBEDDED_DATA];
+  initDashboard();
+  if (typeof saveAllDataToSupabase === 'function') saveAllDataToSupabase();
+}
+
+function parseData(raw) {
+  if(!raw.length){ toast('Planilha vazia ou formato inválido.'); return; }
+  const keys = Object.keys(raw[0]).map(k=>k.toLowerCase().trim());
+  const findKey = (terms) => {
+    const k = Object.keys(raw[0]).find(k => terms.some(t => k.toLowerCase().includes(t)));
+    return k || null;
+  };
+  const kNome = findKey(['nome','estabelecimento','store']);
+  const kMes  = findKey(['mês','mes','month','competencia']);
+  const kInf  = findKey(['informado']);
+  const kReal = findKey(['real']) ;
+  const kMom  = findKey(['realizado','momento','acumulado']);
+  if(!kNome||!kMes||!kInf){ toast('⚠ Colunas não identificadas. Verifique: Nome | Mês | TPV Hubspot | TPV Real | TPV Realizado'); return; }
+  const kExec = findKey(['executivo','exec','responsavel','vendedor']);
+  const kMrr  = findKey(['mrr','recorrente']);
+  const kOs   = findKey(['one shot','oneshot','one-shot']);
+  const cleanNum = v => parseFloat(String(v||'0').replace(/[^\d.,]/g,'').replace(',','.')) || 0;
+  allData = raw.map(r=>({
+    nome:      String(r[kNome]||'').trim(),
+    mes:       String(r[kMes]||'').trim(),
+    executivo: kExec ? normalizeExec(String(r[kExec]||'').trim()) : '',
+    informado: cleanNum(r[kInf]),
+    real:      kReal ? cleanNum(r[kReal]) : 0,
+    momento:   kMom  ? cleanNum(r[kMom])  : 0,
+    mrr:       kMrr  ? cleanNum(r[kMrr])  : 0,
+    oneshot:   kOs   ? cleanNum(r[kOs])   : 0,
+  })).filter(r=>r.nome&&r.mes);
+  initDashboard();
+  // Save newly uploaded data to Supabase
+  if (typeof saveAllDataToSupabase === 'function') saveAllDataToSupabase();
+}
+
+// ── DEMO DATA
+
+
+// ── INIT
+function initDashboard() {
+  document.getElementById('upload-zone').style.display = 'none';
+  document.getElementById('dashboard').style.display   = 'block';
+  const months = [...new Set(allData.map(d=>d.mes))].sort((a,b)=>{
+    const ai = MONTHS_ORDER.indexOf(a), bi = MONTHS_ORDER.indexOf(b);
+    return (ai<0?99:ai)-(bi<0?99:bi);
+  });
+  currentMonth = months[0];
+  buildMonthChips(months);
+  renderAll();
+  renderEvo();
+  renderPending();
+  toast('✅ Dados carregados — ' + allData.length + ' registros');
+}
+
+function buildMonthChips(months) {
+  // Global month bar — shown on all tabs
+  const allActive = currentMonth === 'TODOS';
+  document.getElementById('global-month-chips').innerHTML =
+    `<button class="gmonth-chip${allActive?' active':''}" onclick="globalSelectMonth('TODOS',this)" style="font-weight:700;">Todos</button>` +
+    months.map(m=>
+      `<button class="gmonth-chip${m===currentMonth?' active':''}" onclick="globalSelectMonth('${m}',this)">${m}</button>`
+    ).join('');
+}
+
+function globalSelectMonth(m, el) {
+  currentMonth = m;
+  document.querySelectorAll('.gmonth-chip').forEach(c=>c.classList.remove('active'));
+  if(el) el.classList.add('active');
+
+  if (m === 'TODOS') {
+    // Hide date bar — not applicable for all months
+    document.getElementById('date-bar').style.display = 'none';
+    diasPassados = 1; diasTotais = 1; pctPeriodo = 1;
+  } else {
+    document.getElementById('date-bar').style.display = '';
+    var monthMap = {'Janeiro':1,'Fevereiro':2,'Março':3,'Abril':4,'Maio':5,'Junho':6,'Julho':7,'Agosto':8,'Setembro':9,'Outubro':10,'Novembro':11,'Dezembro':12};
+    var mIdx = monthMap[m] || 1;
+    var today = new Date();
+    var yy = today.getFullYear();
+    // Período de apuração = mês SEGUINTE
+    var apIdx2 = mIdx + 1;
+    var apYY2  = yy;
+    if (apIdx2 > 12) { apIdx2 = 1; apYY2 += 1; }
+    var apStr2   = String(apIdx2).padStart(2,'0');
+    var lastDay  = new Date(apYY2, apIdx2, 0).getDate();
+    var todayDD  = String(today.getDate()).padStart(2,'0');
+    var todayMM  = String(today.getMonth()+1).padStart(2,'0');
+    document.getElementById('dt-inicio').value = apYY2+'-'+apStr2+'-01';
+    document.getElementById('dt-fim').value    = apYY2+'-'+apStr2+'-'+String(lastDay).padStart(2,'0');
+    if (todayMM === apStr2 && today.getFullYear() === apYY2) {
+      document.getElementById('dt-hoje').value = apYY2+'-'+todayMM+'-'+todayDD;
+    } else if (apIdx2 < today.getMonth()+1) {
+      document.getElementById('dt-hoje').value = apYY2+'-'+apStr2+'-'+String(lastDay).padStart(2,'0');
+    } else {
+      document.getElementById('dt-hoje').value = apYY2+'-'+apStr2+'-01';
+    }
+    updateDateCalc();
+  }
+  renderAll();
+  renderEvo();
+  renderPending();
+  renderBacklog();
+  renderComissoes();
+}
+
+function selectMonth(m, el) {
+  globalSelectMonth(m, null);
+  document.querySelectorAll('.gmonth-chip').forEach(c=>c.classList.toggle('active', c.textContent===m));
+}
+
+// ── MONTH DATA
+function getMonthRows() {
+  if (currentMonth === 'TODOS') return allData;
+  return allData.filter(d=>d.mes===currentMonth);
+}
+function getFiltered() {
+  let rows = getMonthRows();
+  const q   = document.getElementById('search').value.toLowerCase();
+  const st  = document.getElementById('filter-status').value;
+  const srt = document.getElementById('sort-by').value;
+  if(q) rows = rows.filter(r=>r.nome.toLowerCase().includes(q));
+  const fe = document.getElementById('filter-exec')?.value||'';
+  if(fe) rows = rows.filter(r=>r.executivo===fe);
+  if(st) rows = rows.filter(r=>status(pctReal(r))===st);
+  rows = [...rows].sort((a,b)=>{
+    const pa=pctReal(a), pb=pctReal(b);
+    if(srt==='pct-desc') return pb-pa;
+    if(srt==='pct-asc')  return pa-pb;
+    if(srt==='gap-desc') return (b.informado-b.real)-(a.informado-a.real);
+    return a.nome.localeCompare(b.nome,'pt-BR');
+  });
+  return rows;
+}
+
+// ── KPIs
+function renderKPIs() {
+  const rows = getMonthRows();
+  if(!rows.length) return;
+  const totInf  = rows.reduce((s,r)=>s+r.informado,0);
+  const totReal = rows.reduce((s,r)=>s+r.real,0);
+  const totMom  = rows.reduce((s,r)=>s+r.momento,0);
+  const pGeral  = pctVal(totMom,totInf);
+  // period-aware
+  const metaParcialTotal = totInf * (pctPeriodo || 1);
+  const pParcial = metaParcialTotal > 0 ? totMom / metaParcialTotal : pGeral;
+  const nOk     = rows.filter(r=>projecao(r)/r.informado>=.8).length;
+  const nCrit   = rows.filter(r=>projecao(r)/r.informado<.5).length;
+  const gap     = totInf - totReal;
+  const nPend   = rows.filter(r=>pctReal(r)<.8&&!(motivos[currentMonth+'|'+r.nome]?.text)).length;
+  const totProj = rows.reduce((s,r)=>s+projecao(r),0);
+
+  const mesLabel = currentMonth === 'TODOS' ? 'Todos os meses' : currentMonth;
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi-card blue">
+      <div class="kpi-label">% vs Meta Parcial</div>
+      <div class="kpi-value" style="color:${pParcial>=1?'var(--green)':pParcial>=.7?'var(--amber)':'var(--red)'}">${fmtPct(pParcial)}</div>
+      <div class="kpi-sub">Realizado vs esperado no período</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Projeção no ritmo atual</div>
+      <div class="kpi-value" style="font-size:17px">${fmtMoney(totProj)}</div>
+      <div class="kpi-sub">${fmtPct(pctVal(totProj,totInf))} do TPV Hubspot</div>
+    </div>
+    <div class="kpi-card teal">
+      <div class="kpi-label">Realizado até hoje</div>
+      <div class="kpi-value" style="font-size:17px">${fmtMoney(totMom)}</div>
+      <div class="kpi-sub">${fmtPct(pctVal(totMom,totInf))} do Hubspot</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">No ritmo — vão bater</div>
+      <div class="kpi-value">${nOk} <span style="font-size:14px;font-weight:400;color:var(--gray-400)">/ ${rows.length}</span></div>
+      <div class="kpi-sub">Projeção ≥ 80% da meta</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Fora do ritmo</div>
+      <div class="kpi-value">${nCrit}</div>
+      <div class="kpi-sub">Projeção < 50% — crítico</div>
+    </div>
+  `;
+}
+
+// ── CHARTS
+function renderBarChart() {
+  const rows = [...getMonthRows()].sort((a,b)=>pctReal(b)-pctReal(a));
+  const labels = rows.map(r=>r.nome.length>20?r.nome.slice(0,20)+'…':r.nome);
+  const values = rows.map(r=>Math.round(pctReal(r)*100));
+  const colors = rows.map(r=>barClr(pctReal(r)));
+  const h = Math.max(220, rows.length*28+60);
+  document.getElementById('bar-wrap').style.height = h+'px';
+  if(barInst) barInst.destroy();
+  barInst = new Chart(document.getElementById('barChart'), {
+    type:'bar',
+    data:{ labels, datasets:[{ data:values, backgroundColor:colors, borderRadius:4, borderSkipped:false }]},
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:c=>c.raw+'%' }}},
+      scales:{
+        x:{ min:0, max:120, ticks:{ callback:v=>v+'%', font:{size:10} }, grid:{color:'rgba(0,0,0,.05)'}},
+        y:{ ticks:{ font:{size:11}, autoSkip:false }}
+      }
+    }
+  });
+}
+
+function renderDonut() {
+  const rows = getMonthRows();
+  const ok   = rows.filter(r=>pctReal(r)>=.8).length;
+  const warn = rows.filter(r=>{ const p=pctReal(r); return p>=.5&&p<.8; }).length;
+  const bad  = rows.filter(r=>pctReal(r)<.5).length;
+  if(donutInst) donutInst.destroy();
+  donutInst = new Chart(document.getElementById('doughnutChart'),{
+    type:'doughnut',
+    data:{ labels:['Acima 80%','50–80%','Abaixo 50%'], datasets:[{ data:[ok,warn,bad], backgroundColor:['#16A34A','#D97706','#DC2626'], borderWidth:0 }]},
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:false}} }
+  });
+  document.getElementById('donut-legend').innerHTML = [
+    ['#16A34A','Acima de 80%',ok],['#D97706','50–80%',warn],['#DC2626','Abaixo de 50%',bad]
+  ].map(([c,l,n])=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--gray-600)"><span style="width:10px;height:10px;border-radius:2px;background:${c};display:inline-block;flex-shrink:0"></span><span style="flex:1">${l}</span><strong>${n}</strong></div>`).join('');
+}
+
+// ── TABLE
+function renderTable() {
+  const rows = getFiltered();
+  document.getElementById('table-count').textContent = rows.length + ' registros';
+  document.getElementById('table-body').innerHTML = rows.map(r=>{
+    const p   = pctReal(r);
+    const pR  = Math.round(p*100);
+    const s   = status(p);
+    const key = currentMonth+'|'+r.nome;
+    const m   = motivos[key];
+    const bdg = s==='ok' ? `<span class="badge badge-ok" style="background:#16a34a;color:white;font-size:11px;padding:4px 12px;">✅ No ritmo</span>` : s==='warn' ? `<span class="badge badge-warn">⚠ Atenção</span>` : `<span class="badge badge-danger">🔴 Crítico</span>`;
+    const rowBg = s==='ok' ? 'background:#f0fdf4;' : s==='warn' ? 'background:#fffbeb;' : 'background:#fff5f5;';
+    const nameEsc = r.nome.replace(/'/g,"\\'");
+    const motHtml = m?.text
+      ? `<span class="motivo-text" title="${m.text}">${m.text}</span><span class="motivo-exec">${m.exec||''} · ${m.cat||''}</span><button class="btn-edit" onclick="openMotivo('${nameEsc}',${pR})"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar</button>`
+      : `<button class="btn-edit" onclick="openMotivo('${nameEsc}',${pR})"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>${s!=='ok'?'Registrar motivo':'OK'}</button>`;
+    return `<tr style="${rowBg}">
+      ${currentMonth==='TODOS'?`<td><span style="font-size:11px;font-weight:600;background:var(--blue-lt);color:var(--blue);padding:2px 8px;border-radius:99px;white-space:nowrap">${r.mes}</span></td>`:''}
+      <td class="td-name">${r.nome}</td>
+      ${currentMonth==='TODOS'?`<td style="font-size:11px;font-weight:600;color:var(--navy)">${(r.executivo||'—').split(' ').map(w=>w.charAt(0)+w.slice(1).toLowerCase()).join(' ')}</td>`:''}
+      <td class="td-money">${fmtMoney(r.informado)}</td>
+      <td class="td-money">${fmtMoney(r.real)}</td>
+      <td class="td-money">${fmtMoney(r.momento)}</td>
+      <td><div class="pct-wrap"><div class="pct-bar-bg"><div class="pct-bar" style="width:${Math.min(pR,100)}%;background:${barClr(p)}"></div></div><span class="pct-label" style="color:${barClr(p)}">${pR}%</span></div></td>
+      <td>${bdg}</td>
+      <td class="motivo-cell">${motHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── EVOLUÇÃO ANUAL
+function renderEvo() {
+  const months = [...new Set(allData.map(d=>d.mes))].sort((a,b)=>(MONTHS_ORDER.indexOf(a)||99)-(MONTHS_ORDER.indexOf(b)||99));
+  const avgPct  = months.map(m=>{ const rows=allData.filter(d=>d.mes===m); return rows.length ? Math.round(rows.reduce((s,r)=>s+pctReal(r),0)/rows.length*100) : 0; });
+  const totInf  = months.map(m=>allData.filter(d=>d.mes===m).reduce((s,r)=>s+r.informado,0));
+  const totReal = months.map(m=>allData.filter(d=>d.mes===m).reduce((s,r)=>s+r.real,0));
+  const totMom  = months.map(m=>allData.filter(d=>d.mes===m).reduce((s,r)=>s+r.momento,0));
+  const lbls    = months.map(m=>m.slice(0,3));
+
+  if(lineInst) lineInst.destroy();
+  lineInst = new Chart(document.getElementById('lineChart'),{
+    type:'line',
+    data:{ labels:lbls, datasets:[{ label:'% Médio', data:avgPct, borderColor:'#2563EB', backgroundColor:'rgba(37,99,235,.08)', pointBackgroundColor:'#2563EB', borderWidth:2.5, pointRadius:4, tension:.35, fill:true }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+'%'}}}, scales:{ y:{min:0,max:120,ticks:{callback:v=>v+'%',font:{size:10}}}, x:{ticks:{font:{size:10}}} }}
+  });
+
+  if(line2Inst) line2Inst.destroy();
+  line2Inst = new Chart(document.getElementById('lineChart2'),{
+    type:'line',
+    data:{ labels:lbls, datasets:[
+      { label:'Informado', data:totInf, borderColor:'#94A3B8', backgroundColor:'transparent', borderWidth:2, borderDash:[4,4], pointRadius:3, tension:.3 },
+      { label:'Real',      data:totReal, borderColor:'#2563EB', backgroundColor:'transparent', borderWidth:2.5, pointRadius:4, tension:.3 },
+      { label:'Realizado', data:totMom, borderColor:'#0D9488', backgroundColor:'rgba(13,148,136,.08)', borderWidth:2, pointRadius:4, tension:.3, fill:true }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:true, position:'top', labels:{font:{size:11},boxWidth:10,padding:12} }}, scales:{ y:{ ticks:{ callback:v=>'R$'+Intl.NumberFormat('pt-BR',{notation:'compact'}).format(v), font:{size:10}}}, x:{ticks:{font:{size:10}}} }}
+  });
+
+  document.getElementById('evo-body').innerHTML = months.map((m,i)=>{
+    const rows=allData.filter(d=>d.mes===m);
+    const p=avgPct[i];
+    const nOk=rows.filter(r=>pctReal(r)>=.8).length;
+    const nCrit=rows.filter(r=>pctReal(r)<.5).length;
+    const clr=barClr(p/100);
+    return `<tr>
+      <td><strong>${m}</strong></td>
+      <td>${rows.length}</td>
+      <td class="td-money">${fmtMoney(totInf[i])}</td>
+      <td class="td-money">${fmtMoney(totReal[i])}</td>
+      <td class="td-money">${fmtMoney(totMom[i])}</td>
+      <td><strong style="color:${clr}">${p}%</strong></td>
+      <td style="color:var(--green)">${nOk}</td>
+      <td style="color:var(--red)">${nCrit}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── MOTIVOS PENDENTES
+// Motivos selected month
+if (typeof window.motivosMes === 'undefined') window.motivosMes = 'TODOS';
+
+function selectMotivosMes(mes) {
+  window.motivosMes = mes;
+  renderPending();
+}
+
+function renderPending() {
+  // Build month chips
+  const allMonths = [...new Set(allData.map(d=>d.mes))].sort((a,b)=>(MONTHS_ORDER.indexOf(a)||99)-(MONTHS_ORDER.indexOf(b)||99));
+  if (typeof window.motivosMes === 'undefined') window.motivosMes = 'TODOS';
+  const chipsEl = document.getElementById('motivos-month-chips');
+  if (chipsEl) {
+    chipsEl.innerHTML = ['TODOS', ...allMonths].map(m=>
+      `<button class="gmonth-chip${m===window.motivosMes?' active':''}" style="font-size:11px;padding:3px 10px;font-weight:${m==='TODOS'?'700':'500'};" onclick="selectMotivosMes('${m}')">${m==='TODOS'?'Todos':m}</button>`
+    ).join('');
+  }
+
+  // Filter by selected month
+  const pending = allData.filter(r => {
+    const p = pctReal(r);
+    const mesOk = window.motivosMes === 'TODOS' || r.mes === window.motivosMes;
+    return p < .8 && !(motivos[r.mes+'|'+r.nome]?.text) && mesOk;
+  });
+
+  document.getElementById('pending-count').textContent = pending.length + ' pendentes';
+  document.getElementById('pending-body').innerHTML = pending.map(r => {
+    const p = pctReal(r);
+    const nameEsc = r.nome.replace(/'/g, "\'");
+    return `<tr>
+      <td><span class="badge" style="background:var(--blue-lt);color:var(--blue)">${r.mes}</span></td>
+      <td class="td-name">${r.nome}</td>
+      <td class="td-money">${fmtMoney(r.informado)}</td>
+      <td class="td-money">${fmtMoney(r.real)}</td>
+      <td><strong style="color:${barClr(p/100)}">${Math.round(p*100)}%</strong></td>
+      <td><button class="btn-edit" onclick="openMotivoMes('${nameEsc}','${r.mes}',${Math.round(p*100)})">
+        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Registrar
+      </button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--gray-400)">✅ Nenhuma justificativa pendente!</td></tr>';
+}
+
+// ── MODAL
+function openMotivo(nome, pct) { openMotivoMes(nome, currentMonth, pct); }
+function openMotivoMes(nome, mes, pct) {
+  editKey = mes+'|'+nome;
+  const m = motivos[editKey]||{};
+  const clr = barClr(pct/100);
+  document.getElementById('modal-store-name').textContent = nome + ' — ' + mes;
+  document.getElementById('modal-pct-info').innerHTML = `<div class="modal-pct-big" style="color:${clr}">${pct}%</div><div class="modal-pct-desc">de realização<br><span style="color:var(--gray-400);font-size:11px">${pct<50?'🔴 Status Crítico':pct<80?'⚠ Atenção':'✅ Meta atingida'}</span></div>`;
+  document.getElementById('m-exec').value = m.exec||'';
+  document.getElementById('m-cat').value  = m.cat||'';
+  document.getElementById('m-text').value = m.text||'';
+
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('m-exec').focus(),100);
+}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+function saveMotivo() {
+  const mExec = document.getElementById('m-exec').value.trim();
+  const mCat  = document.getElementById('m-cat').value;
+  const mText = document.getElementById('m-text').value.trim();
+  motivos[editKey] = { exec: mExec, cat: mCat, text: mText };
+  saveMotivoToSupabase(editKey, mExec, mCat, mText);
+  closeModal();
+  renderTable(); renderKPIs(); renderPending();
+  toast('✅ Justificativa salva!');
+}
+
+// ── TABS
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='evolucao')     renderEvo();
+  if(id==='motivos')      { window.motivosMes = window.motivosMes||'TODOS'; renderPending(); }
+  if(id==='comissoes')    renderComissoes();
+  if(id==='backlog')       renderBacklog();
+  if(id==='gestor')       { /* login handled by user */ }
+}
+
+// ── EXPORT
+function exportCSV() {
+  const hdr = 'Mês,Estabelecimento,TPV Hubspot,TPV Real,TPV Realizado,% Realização,Executivo,Categoria,Motivo';
+  const rows = allData.map(r=>{
+    const m = motivos[r.mes+'|'+r.nome]||{};
+    return `"${r.mes}","${r.nome}",${r.informado},${r.real},${r.momento},${Math.round(pctReal(r)*100)}%,"${m.exec||''}","${m.cat||''}","${m.text||''}"`;
+  });
+  const blob = new Blob([[hdr,...rows].join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tpv_dashboard.csv'; a.click();
+}
+
+// ── TOAST
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 3000);
+}
+
+// ── RENDER ALL
+function renderAll() { renderKPIs(); renderBarChart(); renderDonut(); renderTable(); }
+
+// ══════════════════════════════════════════
+// EXECUTIVOS & COMISSÕES
+// ══════════════════════════════════════════
+
+const EXECUTIVOS = [
+  { nome: 'MILENA SANTOS',            nivel: 1, metaMRR: 3000,  metaOneShot: 4000  },
+  { nome: 'NATALIE STEFFANINI',           nivel: 3, metaMRR: 8500,  metaOneShot: 12500 },
+  { nome: 'KAIQUE OLIVEIRA',            nivel: 3, metaMRR: 8500,  metaOneShot: 12500 },
+  { nome: 'GUSTAVO MATHEUS',           nivel: 3, metaMRR: 8500,  metaOneShot: 12500 },
+  { nome: 'IGOR LUIS',         nivel: 3, metaMRR: 8500,  metaOneShot: 12500 },
+  { nome: 'RENATO PASSARETI',  nivel: 4, metaMRR: 10000, metaOneShot: 15000 },
+  { nome: 'CHARLES CIPRIANO',  nivel: 3, metaMRR: 8500,  metaOneShot: 12500 },
+];
+
+const NIVEIS = [
+  { nivel: 1, fatorMRR: 0.12, fatorOneShot: 0.10 },
+  { nivel: 2, fatorMRR: 0.14, fatorOneShot: 0.12 },
+  { nivel: 3, fatorMRR: 0.20, fatorOneShot: 0.18 },
+  { nivel: 4, fatorMRR: 0.22, fatorOneShot: 0.20 },
+  { nivel: 5, fatorMRR: 0.25, fatorOneShot: 0.23 },
+];
+
+const FAIXAS = [
+  { min: 0,    max: 0.60, mult: 0    },
+  { min: 0.60, max: 0.70, mult: 0.6  },
+  { min: 0.70, max: 0.80, mult: 0.7  },
+  { min: 0.80, max: 0.90, mult: 0.9  },
+  { min: 0.90, max: 1.00, mult: 0.95 },
+  { min: 1.00, max: 1.20, mult: 1.1  },
+  { min: 1.20, max: 999,  mult: 1.2  },
+];
+
+// Senhas dos executivos (em produção, use backend!)
+const SENHAS = {
+  'MILENA SANTOS':      'prata72',
+  'NATALIE STEFFANINI': 'chuva45',
+  'KAIQUE OLIVEIRA':    'folha83',
+  'GUSTAVO MATHEUS':    'pedra16',
+  'IGOR LUIS':          'vento59',
+  'RENATO PASSARETI':   'chave37',
+  'CHARLES CIPRIANO':   'nuvem91',
+};
+
+const AVATAR_COLORS = ['#2563EB','#0D9488','#D97706','#DC2626','#7C3AED','#059669','#DB2777'];
+
+function getMultiplicador(pctAtingimento) {
+  const f = FAIXAS.find(f => pctAtingimento >= f.min && pctAtingimento < f.max);
+  return f ? f.mult : 0;
+}
+
+function getFaixaLabel(pct) {
+  if (pct < 0.60) return { label: '< 60%',      color: '#DC2626', bg: '#FEE2E2' };
+  if (pct < 0.70) return { label: '60% – 69%',  color: '#D97706', bg: '#FEF3C7' };
+  if (pct < 0.80) return { label: '70% – 79%',  color: '#D97706', bg: '#FEF3C7' };
+  if (pct < 0.90) return { label: '80% – 89%',  color: '#2563EB', bg: '#EFF6FF' };
+  if (pct < 1.00) return { label: '90% – 99%',  color: '#2563EB', bg: '#EFF6FF' };
+  if (pct < 1.20) return { label: '100% – 120%',color: '#16A34A', bg: '#DCFCE7' };
+  return               { label: '≥ 120%',        color: '#16A34A', bg: '#DCFCE7' };
+}
+
+// Get realized MRR and OneShot for an exec in a given month
+// MRR = sum of TPV Realizado for their stores
+// OneShot = sum of TPV Real for their stores (one-time deals)
+// Since stores aren't tied to execs in data, we compute from the global
+// prorated: exec's share = (exec metaMRR / sum all metaMRR) * total realizado
+function getExecRealizados(exec, mes) {
+  // Sum real MRR and OneShot from stores assigned to this exec
+  const rows = allData.filter(d => d.mes === mes && d.executivo === exec.nome);
+  const realizadoMRR     = rows.reduce((s,r)=>s+(r.mrr||0), 0);
+  const realizadoOneShot = rows.reduce((s,r)=>s+(r.oneshot||0), 0);
+  return { realizadoMRR, realizadoOneShot };
+}
+
+function calcComissao(exec, mes) {
+  const { realizadoMRR, realizadoOneShot } = getExecRealizados(exec, mes);
+  const nivel = NIVEIS.find(n=>n.nivel===exec.nivel) || NIVEIS[0];
+
+  const pctMRR     = exec.metaMRR     > 0 ? realizadoMRR     / exec.metaMRR     : 0;
+  const pctOneShot = exec.metaOneShot > 0 ? realizadoOneShot / exec.metaOneShot : 0;
+
+  const multMRR     = getMultiplicador(pctMRR);
+  const multOneShot = getMultiplicador(pctOneShot);
+
+  // Fórmula: (Meta atingida [valor] x fator de premiação da faixa) x multiplicador
+  const comissaoMRR     = realizadoMRR     * nivel.fatorMRR     * multMRR;
+  const comissaoOneShot = realizadoOneShot * nivel.fatorOneShot * multOneShot;
+
+  return {
+    realizadoMRR, realizadoOneShot,
+    pctMRR, pctOneShot,
+    multMRR, multOneShot,
+    comissaoMRR, comissaoOneShot,
+    total: comissaoMRR + comissaoOneShot,
+    nivel,
+  };
+}
+
+// ── RENDER COMISSÕES (público — sem valores R$)
+function renderComissoes() {
+  const filterMes = document.getElementById('filter-exec-mes')?.value || '';
+  const months = [...new Set(allData.map(d=>d.mes))];
+
+  // populate filter
+  // Build month chips for comissoes
+  const chipsEl = document.getElementById('comissoes-month-chips');
+  if (chipsEl) {
+    const allMonths = [...new Set(allData.map(d=>d.mes))].sort((a,b)=>(MONTHS_ORDER.indexOf(a)||99)-(MONTHS_ORDER.indexOf(b)||99));
+    if (!window.comissoesMes) window.comissoesMes = allMonths[allMonths.length-1] || currentMonth;
+    chipsEl.innerHTML = allMonths.map(m=>
+      `<button class="gmonth-chip${m===window.comissoesMes?' active':''}" style="font-size:11px;padding:3px 10px;" onclick="selectComissoesMes('${m}')">${m}</button>`
+    ).join('');
+  }
+  const mes = window.comissoesMes || currentMonth || (months[0] || '');
+  if (!mes) return;
+
+  document.getElementById('exec-grid').innerHTML = EXECUTIVOS.map((exec, i) => {
+    const c = calcComissao(exec, mes);
+    const pctMRR_disp = Math.round(c.pctMRR * 100);
+    const pctOS_disp  = Math.round(c.pctOneShot * 100);
+    const fMRR = getFaixaLabel(c.pctMRR);
+    const fOS  = getFaixaLabel(c.pctOneShot);
+    const avClr = AVATAR_COLORS[i % AVATAR_COLORS.length];
+    const initials = exec.nome.split(' ').map(w=>w[0]).slice(0,2).join('');
+    const barWMRR = Math.min(pctMRR_disp, 120);
+    const barWOS  = Math.min(pctOS_disp, 120);
+    return `<div class="exec-card">
+      <div class="exec-card-head">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="exec-avatar" style="background:${avClr}20;color:${avClr}">${initials}</div>
+          <div>
+            <div class="exec-name">${exec.nome.charAt(0)+exec.nome.slice(1).toLowerCase()}</div>
+            <div class="exec-nivel">Nível ${exec.nivel} · ${mes} · ${allData.filter(d=>d.mes===mes&&d.executivo===exec.nome).length} casas</div>
+          </div>
+        </div>
+      </div>
+      <div class="exec-card-body">
+        <div style="font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">MRR</div>
+        <div class="exec-metric">
+          <span class="exec-metric-label">Meta</span>
+          <span class="exec-metric-val">${fmtMoney(exec.metaMRR)}</span>
+        </div>
+        <div class="exec-ating-wrap">
+          <div class="exec-ating-label">
+            <span>Atingimento</span>
+            <span style="font-weight:700;color:${fMRR.color}">${pctMRR_disp}%</span>
+          </div>
+          <div class="exec-ating-bar-bg">
+            <div class="exec-ating-bar" style="width:${barWMRR/1.2}%;background:${fMRR.color}"></div>
+          </div>
+          <span class="faixa-badge" style="background:${fMRR.bg};color:${fMRR.color}">${fMRR.label}</span>
+        </div>
+        <div style="font-size:11px;font-weight:600;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em;margin:6px 0 2px;">One-Shot</div>
+        <div class="exec-metric">
+          <span class="exec-metric-label">Meta</span>
+          <span class="exec-metric-val">${fmtMoney(exec.metaOneShot)}</span>
+        </div>
+        <div class="exec-ating-wrap">
+          <div class="exec-ating-label">
+            <span>Atingimento</span>
+            <span style="font-weight:700;color:${fOS.color}">${pctOS_disp}%</span>
+          </div>
+          <div class="exec-ating-bar-bg">
+            <div class="exec-ating-bar" style="width:${barWOS/1.2}%;background:${fOS.color}"></div>
+          </div>
+          <span class="faixa-badge" style="background:${fOS.bg};color:${fOS.color}">${fOS.label}</span>
+        </div>
+      </div>
+      <div class="exec-card-foot">
+        <span class="exec-card-foot-label">Comissão total</span>
+        <span class="exec-card-foot-val" style="color:var(--gray-400);font-size:12px;font-style:italic;">🔐 Acesso privado</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── LOGIN
+let loggedExec = null;
+let resultTabActive = 'mrr';
+let execSelectedMonth = '';
+
+function doLogin() {
+  const nome  = document.getElementById('login-exec').value;
+  const senha = document.getElementById('login-senha').value;
+  const err   = document.getElementById('login-error');
+  if (!nome) { err.style.display='block'; err.textContent='Selecione seu nome.'; return; }
+  if (SENHAS[nome] !== senha) { err.style.display='block'; err.textContent='Senha incorreta. Tente novamente.'; return; }
+  err.style.display = 'none';
+  loggedExec = EXECUTIVOS.find(e=>e.nome===nome);
+  document.getElementById('login-screen').style.display  = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+  renderResultado();
+}
+
+function doLogout() {
+  loggedExec = null;
+  execSelectedMonth = '';
+  document.getElementById('login-screen').style.display  = 'block';
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('login-senha').value = '';
+}
+
+function switchResultTab(tab, btn) {
+  resultTabActive = tab;
+  document.querySelectorAll('.result-tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderResultado();
+}
+
+function selectExecMonth(mes) {
+  execSelectedMonth = mes;
+  renderResultado();
+}
+
+function renderResultado() {
+  if (!loggedExec) return;
+  const months = [...new Set(allData.map(d=>d.mes))].sort((a,b)=>{
+    return (MONTHS_ORDER.indexOf(a)||99)-(MONTHS_ORDER.indexOf(b)||99);
+  });
+  // Init selected month
+  if (!execSelectedMonth || !months.includes(execSelectedMonth)) {
+    execSelectedMonth = months[months.length-1] || currentMonth;
+  }
+  const mes = execSelectedMonth;
+  // Build month chips
+  document.getElementById('exec-month-chips').innerHTML = months.map(m=>
+    `<button class="gmonth-chip${m===mes?' active':''}" style="font-size:11px;padding:3px 10px;" onclick="selectExecMonth('${m}')">${m}</button>`
+  ).join('');
+  document.getElementById('result-mes-label').textContent = 'Período: ' + mes;
+  const c = calcComissao(loggedExec, mes);
+  const nivel = c.nivel;
+  const avClr = AVATAR_COLORS[EXECUTIVOS.indexOf(loggedExec) % AVATAR_COLORS.length];
+  const initials = loggedExec.nome.split(' ').map(w=>w[0]).slice(0,2).join('');
+
+  let bodyHtml = '';
+
+  if (resultTabActive === 'mrr') {
+    const f = getFaixaLabel(c.pctMRR);
+    bodyHtml = `
+      <div class="result-card">
+        <div class="result-card-head">
+          <div class="result-avatar-lg" style="background:${avClr}30;color:${avClr}">${initials}</div>
+          <div>
+            <div class="result-name">${loggedExec.nome.charAt(0)+loggedExec.nome.slice(1).toLowerCase()}</div>
+            <div class="result-nivel">Nível ${loggedExec.nivel} · MRR · ${mes}</div>
+          </div>
+        </div>
+        <div class="result-body">
+          <div class="result-row"><span class="result-row-label">Meta MRR</span><span class="result-row-val">${fmtMoney(loggedExec.metaMRR)}</span></div>
+          <div class="result-row"><span class="result-row-label">Realizado MRR</span><span class="result-row-val">${fmtMoney(c.realizadoMRR)}</span></div>
+          <div class="result-row"><span class="result-row-label">Atingimento</span><span class="result-row-val" style="color:${f.color}">${Math.round(c.pctMRR*100)}% — ${f.label}</span></div>
+          <div class="result-row"><span class="result-row-label">Fator de premiação</span><span class="result-row-val">${(nivel.fatorMRR*100).toFixed(0)}%</span></div>
+          <div class="result-row"><span class="result-row-label">Multiplicador</span><span class="result-row-val">${c.multMRR}x</span></div>
+          <div class="result-comissao-box">
+            <div class="result-comissao-label">Comissão MRR</div>
+            <div class="result-comissao-val">${fmtMoney(c.comissaoMRR)}</div>
+            <div class="result-comissao-sub">Realizado × ${(nivel.fatorMRR*100).toFixed(0)}% × ${c.multMRR}</div>
+          </div>
+        </div>
+      </div>`;
+  } else if (resultTabActive === 'oneshot') {
+    const f = getFaixaLabel(c.pctOneShot);
+    bodyHtml = `
+      <div class="result-card">
+        <div class="result-card-head">
+          <div class="result-avatar-lg" style="background:${avClr}30;color:${avClr}">${initials}</div>
+          <div>
+            <div class="result-name">${loggedExec.nome.charAt(0)+loggedExec.nome.slice(1).toLowerCase()}</div>
+            <div class="result-nivel">Nível ${loggedExec.nivel} · One-Shot · ${mes}</div>
+          </div>
+        </div>
+        <div class="result-body">
+          <div class="result-row"><span class="result-row-label">Meta One-Shot</span><span class="result-row-val">${fmtMoney(loggedExec.metaOneShot)}</span></div>
+          <div class="result-row"><span class="result-row-label">Realizado One-Shot</span><span class="result-row-val">${fmtMoney(c.realizadoOneShot)}</span></div>
+          <div class="result-row"><span class="result-row-label">Atingimento</span><span class="result-row-val" style="color:${f.color}">${Math.round(c.pctOneShot*100)}% — ${f.label}</span></div>
+          <div class="result-row"><span class="result-row-label">Fator de premiação</span><span class="result-row-val">${(nivel.fatorOneShot*100).toFixed(0)}%</span></div>
+          <div class="result-row"><span class="result-row-label">Multiplicador</span><span class="result-row-val">${c.multOneShot}x</span></div>
+          <div class="result-comissao-box">
+            <div class="result-comissao-label">Comissão One-Shot</div>
+            <div class="result-comissao-val">${fmtMoney(c.comissaoOneShot)}</div>
+            <div class="result-comissao-sub">Realizado × ${(nivel.fatorOneShot*100).toFixed(0)}% × ${c.multOneShot}</div>
+          </div>
+        </div>
+      </div>`;
+  } else {
+    bodyHtml = `
+      <div class="result-card">
+        <div class="result-card-head">
+          <div class="result-avatar-lg" style="background:${avClr}30;color:${avClr}">${initials}</div>
+          <div>
+            <div class="result-name">${loggedExec.nome.charAt(0)+loggedExec.nome.slice(1).toLowerCase()}</div>
+            <div class="result-nivel">Nível ${loggedExec.nivel} · Resumo · ${mes}</div>
+          </div>
+        </div>
+        <div class="result-body">
+          <div class="result-row"><span class="result-row-label">Comissão MRR</span><span class="result-row-val" style="color:var(--green)">${fmtMoney(c.comissaoMRR)}</span></div>
+          <div class="result-row"><span class="result-row-label">Comissão One-Shot</span><span class="result-row-val" style="color:var(--blue)">${fmtMoney(c.comissaoOneShot)}</span></div>
+          <div class="result-comissao-box">
+            <div class="result-comissao-label">💰 Comissão Total do Mês</div>
+            <div class="result-comissao-val">${fmtMoney(c.total)}</div>
+            <div class="result-comissao-sub">MRR + One-Shot · ${mes}</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  document.getElementById('result-content').innerHTML = bodyHtml;
+}
+
+
+// ══════════════════════════════════════════
+// GESTOR
+// ══════════════════════════════════════════
+
+const GESTOR_CRED = { login: 'guilherme.freitas', senha: 'Lolo3005!' };
+
+// Tabela de comissão do Gestor (imagem enviada)
+// Atingimento do time por indicador (MRR e One-Shot separados)
+const GESTOR_FAIXAS = [
+  { min: 0,    max: 0.60, fatorMRR: 0.0000, fatorOS: 0.0000 },
+  { min: 0.60, max: 0.70, fatorMRR: 0.0080, fatorOS: 0.0060 },
+  { min: 0.70, max: 0.80, fatorMRR: 0.0100, fatorOS: 0.0080 },
+  { min: 0.80, max: 0.90, fatorMRR: 0.0170, fatorOS: 0.0150 },
+  { min: 0.90, max: 1.00, fatorMRR: 0.0200, fatorOS: 0.0180 },
+  { min: 1.00, max: 1.20, fatorMRR: 0.0320, fatorOS: 0.0300 },
+  { min: 1.20, max: 999,  fatorMRR: 0.0350, fatorOS: 0.0330 },
+];
+
+const GESTOR_METAS = {
+  'Abril': { metaMRR: 65550,  metaOS: 91500  },
+  'Maio':  { metaMRR: 75000,  metaOS: 100000 },
+};
+const GESTOR_BONUS_META = 2000;
+let gestorSelectedMes = '';
+
+function getGestorMeta(mes) {
+  return GESTOR_METAS[mes] || { metaMRR: 65550, metaOS: 91500 };
+}
+
+function getGestorFaixa(pct) {
+  return GESTOR_FAIXAS.find(f => pct >= f.min && pct < f.max) || GESTOR_FAIXAS[0];
+}
+
+function calcGestorComissao(mes) {
+  const rows = (mes === 'TODOS') ? allData : allData.filter(d => d.mes === mes);
+  const totMRR = rows.reduce((s,r)=>s+(r.mrr||0), 0);
+  const totOS  = rows.reduce((s,r)=>s+(r.oneshot||0), 0);
+  const { metaMRR: GESTOR_META_MRR, metaOS: GESTOR_META_OS } = getGestorMeta(mes);
+
+  const pctMRR = GESTOR_META_MRR > 0 ? totMRR / GESTOR_META_MRR : 0;
+  const pctOS  = GESTOR_META_OS  > 0 ? totOS  / GESTOR_META_OS  : 0;
+
+  const faixaMRR = getGestorFaixa(pctMRR);
+  const faixaOS  = getGestorFaixa(pctOS);
+
+  const comMRR = totMRR * faixaMRR.fatorMRR;
+  const comOS  = totOS  * faixaOS.fatorOS;
+
+  // Bônus: apenas se atingir >= 100% em AMBOS
+  const bonus = (pctMRR >= 1.0 && pctOS >= 1.0) ? GESTOR_BONUS_META : 0;
+
+  return { totMRR, totOS, pctMRR, pctOS, faixaMRR, faixaOS, comMRR, comOS, bonus, total: comMRR + comOS + bonus };
+}
+
+function doGestorLogin() {
+  const u = document.getElementById('gestor-login-user').value.trim();
+  const s = document.getElementById('gestor-login-senha').value;
+  const err = document.getElementById('gestor-login-error');
+  if (u !== GESTOR_CRED.login || s !== GESTOR_CRED.senha) {
+    err.style.display = 'block'; return;
+  }
+  err.style.display = 'none';
+  document.getElementById('gestor-login-screen').style.display = 'none';
+  document.getElementById('gestor-painel').style.display = 'block';
+  renderGestor();
+}
+
+function doGestorLogout() {
+  gestorSelectedMes = '';
+  document.getElementById('gestor-login-screen').style.display = 'block';
+  document.getElementById('gestor-painel').style.display = 'none';
+  document.getElementById('gestor-login-user').value = '';
+  document.getElementById('gestor-login-senha').value = '';
+}
+
+function selectComissoesMes(mes) {
+  window.comissoesMes = mes;
+  renderComissoes();
+}
+
+function selectGestorMes(mes) {
+  gestorSelectedMes = mes;
+  renderGestor();
+}
+
+function renderGestor() {
+  const months = [...new Set(allData.map(d=>d.mes))].sort((a,b)=>(MONTHS_ORDER.indexOf(a)||99)-(MONTHS_ORDER.indexOf(b)||99));
+  // Init selected month to most recent
+  if (!gestorSelectedMes || !months.includes(gestorSelectedMes)) {
+    gestorSelectedMes = months[months.length-1] || currentMonth;
+  }
+  const mes = gestorSelectedMes;
+
+  // Build month chips
+  const chipsEl = document.getElementById('gestor-month-chips');
+  if (chipsEl) {
+    chipsEl.innerHTML = months.map(m =>
+      `<button class="gmonth-chip${m===mes?' active':''}" style="font-size:11px;padding:3px 12px;" onclick="selectGestorMes('${m}')">${m}</button>`
+    ).join('');
+  }
+
+  const { metaMRR: GESTOR_META_MRR, metaOS: GESTOR_META_OS } = getGestorMeta(mes);
+  document.getElementById('gestor-mes-label').textContent = 'Período: ' + mes + ' · Meta MRR: ' + fmtMoney(GESTOR_META_MRR) + ' · Meta One-Shot: ' + fmtMoney(GESTOR_META_OS);
+
+  const c = calcGestorComissao(mes);
+
+  // Total
+  document.getElementById('gestor-total-val').textContent = fmtMoney(c.total);
+  document.getElementById('gestor-total-sub').textContent = 'MRR ' + fmtMoney(c.comMRR) + ' + One-Shot ' + fmtMoney(c.comOS) + (c.bonus > 0 ? ' + Bônus ' + fmtMoney(c.bonus) : '');
+
+  // Bônus box
+  const bonusEl = document.getElementById('gestor-bonus-box');
+  if (c.bonus > 0) {
+    bonusEl.innerHTML = `<div class="bonus-box">
+      <div class="bonus-box-label">🎯 Bônus de Atingimento — 100% MRR + 100% One-Shot</div>
+      <div class="bonus-box-val">+ ${fmtMoney(c.bonus)}</div>
+      <div class="bonus-box-sub">Parabéns! Você atingiu 100% em ambos os indicadores.</div>
+    </div>`;
+  } else {
+    const faltaMRR = c.pctMRR < 1.0 ? ' MRR: ' + Math.round(c.pctMRR*100) + '%' : '';
+    const faltaOS  = c.pctOS  < 1.0 ? ' One-Shot: ' + Math.round(c.pctOS*100)  + '%' : '';
+    bonusEl.innerHTML = `<div style="background:var(--gray-100);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:12px;">
+      <span style="font-size:24px;">🎯</span>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--gray-600);">Bônus de R$ 2.000 — não atingido</div>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">É necessário 100% em MRR e One-Shot. Atual:${faltaMRR}${faltaOS}</div>
+      </div>
+    </div>`;
+  }
+
+  // KPIs
+  const fMRR = getFaixaLabel(c.pctMRR);
+  const fOS  = getFaixaLabel(c.pctOS);
+  document.getElementById('gestor-kpi-grid').innerHTML = `
+    <div class="gestor-kpi" style="border-color:${fMRR.color}">
+      <div class="gestor-kpi-label">% Atingimento MRR</div>
+      <div class="gestor-kpi-val" style="color:${fMRR.color}">${Math.round(c.pctMRR*100)}%</div>
+      <div class="gestor-kpi-sub">Realizado: ${fmtMoney(c.totMRR)} / Meta: ${fmtMoney(GESTOR_META_MRR)}</div>
+    </div>
+    <div class="gestor-kpi" style="border-color:${fOS.color}">
+      <div class="gestor-kpi-label">% Atingimento One-Shot</div>
+      <div class="gestor-kpi-val" style="color:${fOS.color}">${Math.round(c.pctOS*100)}%</div>
+      <div class="gestor-kpi-sub">Realizado: ${fmtMoney(c.totOS)} / Meta: ${fmtMoney(GESTOR_META_OS)}</div>
+    </div>
+    <div class="gestor-kpi">
+      <div class="gestor-kpi-label">Comissão MRR</div>
+      <div class="gestor-kpi-val" style="color:var(--teal)">${fmtMoney(c.comMRR)}</div>
+      <div class="gestor-kpi-sub">Fator: ${(c.faixaMRR.fatorMRR*100).toFixed(2)}% · Faixa: ${fMRR.label}</div>
+    </div>
+    <div class="gestor-kpi">
+      <div class="gestor-kpi-label">Comissão One-Shot</div>
+      <div class="gestor-kpi-val" style="color:var(--blue)">${fmtMoney(c.comOS)}</div>
+      <div class="gestor-kpi-sub">Fator: ${(c.faixaOS.fatorOS*100).toFixed(2)}% · Faixa: ${fOS.label}</div>
+    </div>
+  `;
+
+  // Detalhes MRR
+  document.getElementById('gestor-mrr-detail').innerHTML = `
+    <div class="gestor-detail-row"><span class="gestor-detail-label">Meta</span><span class="gestor-detail-val">${fmtMoney(GESTOR_META_MRR)}</span></div>
+    <div class="gestor-detail-row"><span class="gestor-detail-label">Total Realizado pelo Time</span><span class="gestor-detail-val">${fmtMoney(c.totMRR)}</span></div>
+    <div class="gestor-detail-row"><span class="gestor-detail-label">Atingimento</span><span class="gestor-detail-val" style="color:${fMRR.color}">${Math.round(c.pctMRR*100)}% — ${fMRR.label}</span></div>
+    <div class="gestor-detail-row"><span class="gestor-detail-label">Fator de Premiação</span><span class="gestor-detail-val">${(c.faixaMRR.fatorMRR*100).toFixed(2)}%</span></div>
+    <div class="gestor-detail-row" style="background:var(--gray-50)"><span class="gestor-detail-label" style="font-weight:600">Comissão MRR</span><span class="gestor-detail-val" style="color:var(--teal);font-size:16px">${fmtMoney(c.comMRR)}</span></div>
+  `;
+
+  // Detalhes One-Shot
+  document.getElementById('gestor-os-detail').innerHTML = `
+    <div class="gestor-detail-row"><span class="gestor-detail-label">Meta</span><span class="gestor-detail-val">${fmtMoney(GESTOR_META_OS)}</span></div>
+    <div class="gestor-detail-row"><span class="gestor-detail-label">Total Realizado pelo Time</span><span class="gestor-detail-val">${fmtMoney(c.totOS)}</span></div>
+    <div class="gestor-detail-row"><span class="gestor-detail-label">Atingimento</span><span class="gestor-detail-val" style="color:${fOS.color}">${Math.round(c.pctOS*100)}% — ${fOS.label}</span></div>
+    <div class="gestor-detail-row"><span class="gestor-detail-label">Fator de Premiação</span><span class="gestor-detail-val">${(c.faixaOS.fatorOS*100).toFixed(2)}%</span></div>
+    <div class="gestor-detail-row" style="background:var(--gray-50)"><span class="gestor-detail-label" style="font-weight:600">Comissão One-Shot</span><span class="gestor-detail-val" style="color:var(--blue);font-size:16px">${fmtMoney(c.comOS)}</span></div>
+  `;
+
+  // Time de executivos
+  initMgmtFilter();
+  renderMgmtTable();
+    document.getElementById('gestor-team-body').innerHTML = EXECUTIVOS.map((exec, i) => {
+    const ec = calcComissao(exec, mes);
+    const avClr = AVATAR_COLORS[i % AVATAR_COLORS.length];
+    const casas = allData.filter(d=>d.mes===mes&&d.executivo===exec.nome).length;
+    const fM = getFaixaLabel(ec.pctMRR);
+    const fO = getFaixaLabel(ec.pctOneShot);
+    return `<tr>
+      <td><span style="font-size:12px;font-weight:600;color:${avClr}">${exec.nome.charAt(0)+exec.nome.slice(1).toLowerCase()}</span></td>
+      <td style="text-align:center">${casas}</td>
+      <td class="td-money">${fmtMoney(ec.realizadoMRR)}</td>
+      <td class="td-money">${fmtMoney(ec.realizadoOneShot)}</td>
+      <td><span style="font-weight:700;color:${fM.color}">${Math.round(ec.pctMRR*100)}%</span></td>
+      <td><span style="font-weight:700;color:${fO.color}">${Math.round(ec.pctOneShot*100)}%</span></td>
+      <td class="td-money" style="font-weight:700;color:var(--navy)">${fmtMoney(ec.total)}</td>
+    </tr>`;
+  }).join('');
+}
+
+
+
+// ══════════════════════════════════════════
+// BACKLOG
+// ══════════════════════════════════════════
+let backlogData = {}; // key: mes|nome → { etapa, motivo }
+let bkEditKey   = '';
+let bkEditExec  = '';
+
+function getLoggedExecName() {
+  // Check if an exec is logged in on minha comissao tab
+  return loggedExec ? loggedExec.nome : null;
+}
+
+function initBacklogFilters() {
+  const sel = document.getElementById('bk-filter-mes');
+  if (!sel || sel.options.length > 1) return;
+  const months = [...new Set(allData.map(d=>d.mes))].sort((a,b)=>{
+    return (MONTHS_ORDER.indexOf(a)||99)-(MONTHS_ORDER.indexOf(b)||99);
+  });
+  months.forEach(m=>{ const o=document.createElement('option'); o.value=m; o.textContent=m; sel.appendChild(o); });
+}
+
+function getBkFiltered() {
+  const mes   = document.getElementById('bk-filter-mes')?.value || '';
+  const exec  = document.getElementById('bk-filter-exec')?.value || '';
+  const etapa = document.getElementById('bk-filter-etapa')?.value || '';
+  const q     = document.getElementById('bk-search')?.value.toLowerCase() || '';
+
+  // All rows below 80%
+  let rows = allData.filter(r => pctReal(r) < 0.8);
+  if (mes && mes !== 'TODOS') rows = rows.filter(r => r.mes === mes);
+  if (exec)  rows = rows.filter(r => r.executivo === exec);
+  if (q)     rows = rows.filter(r => r.nome.toLowerCase().includes(q));
+  if (etapa) rows = rows.filter(r => (backlogData[r.mes+'|'+r.nome]?.etapa || 'Pendente') === etapa);
+
+  return rows;
+}
+
+function renderBacklog() {
+  initBacklogFilters();
+  const rows = getBkFiltered();
+  const allPending = allData.filter(r => pctReal(r) < 0.8);
+  const nPend   = allPending.filter(r => (backlogData[r.mes+'|'+r.nome]?.etapa||'Pendente')==='Pendente').length;
+  const nAndamento = allPending.filter(r => (backlogData[r.mes+'|'+r.nome]?.etapa||'')==='Em andamento').length;
+  const nResolv = allPending.filter(r => (backlogData[r.mes+'|'+r.nome]?.etapa||'')==='Realizado').length;
+
+  document.getElementById('bk-count').textContent = rows.length + ' casas';
+
+  document.getElementById('backlog-stats').innerHTML = `
+    <div class="backlog-stat"><div class="backlog-stat-val" style="color:var(--amber)">${nPend}</div><div class="backlog-stat-lbl">Pendente</div></div>
+    <div class="backlog-stat"><div class="backlog-stat-val" style="color:var(--blue)">${nAndamento}</div><div class="backlog-stat-lbl">Em andamento</div></div>
+    <div class="backlog-stat"><div class="backlog-stat-val" style="color:var(--green)">${nResolv}</div><div class="backlog-stat-lbl">Resolvido</div></div>
+  `;
+
+  const loggedName = getLoggedExecName();
+
+  document.getElementById('backlog-body').innerHTML = rows.length ? rows.map(r => {
+    const key    = r.mes+'|'+r.nome;
+    const bk     = backlogData[key] || { etapa: 'Pendente', motivo: '' };
+    const p      = Math.round(pctReal(r)*100);
+    const etapaClass = bk.etapa==='Realizado'?'etapa-realizado':bk.etapa==='Em andamento'?'etapa-andamento':'etapa-pendente';
+    const nameEsc = r.nome.replace(/'/g,"\'");
+    const execEsc = r.executivo.replace(/'/g,"\'");
+    const disabledAttr = '';
+    return `<tr>
+      <td><span style="font-size:11px;font-weight:600;background:var(--blue-lt);color:var(--blue);padding:2px 8px;border-radius:99px">${r.mes}</span></td>
+      <td style="font-weight:500;font-size:12px">${r.nome}</td>
+      <td class="td-money">${fmtMoney(r.momento)}</td>
+      <td><strong style="color:${barClr(pctReal(r))}">${p}%</strong></td>
+      <td><span class="etapa-badge ${etapaClass}">${bk.etapa}</span></td>
+      <td><span class="backlog-motivo-text" title="${bk.motivo||''}">${bk.motivo||'—'}</span></td>
+      <td>
+        <button class="btn-backlog-edit" onclick="openBkModal('${nameEsc}','${r.mes}','${execEsc}')" ${disabledAttr}>
+          ✏ Editar
+        </button>
+      </td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="8" class="backlog-empty">✅ Nenhuma pendência encontrada com os filtros selecionados.</td></tr>`;
+}
+
+function openBkModal(nome, mes, exec) {
+  bkEditKey  = mes+'|'+nome;
+  bkEditExec = exec;
+  const bk   = backlogData[bkEditKey] || { etapa:'Pendente', motivo:'' };
+  document.getElementById('bk-modal-store').textContent = nome + ' — ' + mes;
+  document.getElementById('bk-etapa').value  = bk.etapa  || 'Pendente';
+  document.getElementById('bk-motivo').value = bk.motivo || '';
+  document.getElementById('bk-exec-info').textContent = 'Responsável: ' + exec;
+  document.getElementById('bk-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('bk-motivo').focus(), 100);
+}
+
+function closeBkModal() {
+  document.getElementById('bk-overlay').classList.remove('open');
+  bkEditKey = ''; bkEditExec = '';
+}
+
+function saveBkModal() {
+  if (!bkEditKey) return;
+  const bkEtapa  = document.getElementById('bk-etapa').value;
+  const bkMotivo = document.getElementById('bk-motivo').value.trim();
+  backlogData[bkEditKey] = { etapa: bkEtapa, motivo: bkMotivo };
+  saveBacklogToSupabase(bkEditKey, bkEtapa, bkMotivo);
+  closeBkModal();
+  renderBacklog();
+  toast('✅ Pendência atualizada!');
+}
+
+
+// ══════════════════════════════════════════
+// PAINEL DE GESTÃO (GESTOR)
+// ══════════════════════════════════════════
+
+function switchMgmtTab(tab, btn) {
+  document.getElementById('mgmt-tab-casas').style.display  = tab==='casas'  ? '' : 'none';
+  document.getElementById('mgmt-tab-metas').style.display  = tab==='metas'  ? '' : 'none';
+  document.querySelectorAll('.mgmt-tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if (tab==='metas') renderMgmtMetas();
+}
+
+function initMgmtFilter() {
+  const sel = document.getElementById('mgmt-filter-mes');
+  if (!sel) return;
+  const months = [...new Set(allData.map(d=>d.mes))].sort((a,b)=>(MONTHS_ORDER.indexOf(a)||99)-(MONTHS_ORDER.indexOf(b)||99));
+  const current = sel.value || (currentMonth !== 'TODOS' ? currentMonth : 'TODOS');
+  sel.innerHTML = '<option value="TODOS">Todos os meses</option>' +
+    months.map(m=>`<option value="${m}">${m}</option>`).join('');
+  sel.value = current;
+}
+
+function renderMgmtTable() {
+  initMgmtFilter();
+  const sel = document.getElementById('mgmt-filter-mes');
+  const filterMes = sel?.value || 'TODOS';
+  const rows = filterMes === 'TODOS' ? allData : allData.filter(r=>r.mes===filterMes);
+
+  document.getElementById('mgmt-table-body').innerHTML = rows.map((r, globalIdx) => {
+    const realIdx = allData.indexOf(r);
+    return `<tr>
+      <td><span style="font-size:11px;font-weight:600;background:var(--blue-lt);color:var(--blue);padding:2px 8px;border-radius:99px">${r.mes}</span></td>
+      <td>
+        <input class="mgmt-inline-input" style="width:160px" value="${r.nome}" onchange="updateCasa(${realIdx},'nome',this.value)">
+      </td>
+      <td>
+        <select class="mgmt-inline-input" style="width:160px" onchange="updateCasa(${realIdx},'executivo',this.value)">
+          ${['MILENA SANTOS','NATALIE STEFFANINI','KAIQUE OLIVEIRA','GUSTAVO MATHEUS','IGOR LUIS','RENATO PASSARETI','CHARLES CIPRIANO']
+            .map(e=>`<option${e===r.executivo?' selected':''}>${e}</option>`).join('')}
+        </select>
+      </td>
+      <td><input class="mgmt-inline-input" type="number" value="${r.informado}" onchange="updateCasa(${realIdx},'informado',parseFloat(this.value)||0)"></td>
+      <td><input class="mgmt-inline-input" type="number" value="${r.real}" onchange="updateCasa(${realIdx},'real',parseFloat(this.value)||0)"></td>
+      <td><input class="mgmt-inline-input" type="number" value="${r.momento}" onchange="updateCasa(${realIdx},'momento',parseFloat(this.value)||0)"></td>
+      <td><input class="mgmt-inline-input" type="number" value="${r.mrr||0}" onchange="updateCasa(${realIdx},'mrr',parseFloat(this.value)||0)" style="border-color:var(--teal)"></td>
+      <td><input class="mgmt-inline-input" type="number" value="${r.oneshot||0}" onchange="updateCasa(${realIdx},'oneshot',parseFloat(this.value)||0)" style="border-color:var(--blue)"></td>
+      <td>
+        <button class="mgmt-del-btn" onclick="deleteCasa(${realIdx})">🗑</button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--gray-400)">Nenhuma casa encontrada.</td></tr>';
+}
+
+function updateCasa(idx, field, value) {
+  if (allData[idx]) {
+    allData[idx][field] = value;
+    if (field === 'momento') allData[idx].real = value;
+    saveRowToSupabase(allData[idx]);
+    refreshAllViews();
+    toast('✅ Salvo!');
+  }
+}
+
+function deleteCasa(idx) {
+  const r = allData[idx];
+  if (!confirm('Remover "' + r?.nome + '"?')) return;
+  deleteRowFromSupabase(r.nome, r.mes);
+  allData.splice(idx, 1);
+  renderMgmtTable();
+  refreshAllViews();
+  toast('🗑 Casa removida.');
+}
+
+function addNewCasa() {
+  const mes      = document.getElementById('new-mes').value;
+  const nome     = document.getElementById('new-nome').value.trim();
+  const exec_    = document.getElementById('new-exec').value;
+  const hub      = parseFloat(document.getElementById('new-hub').value)  || 0;
+  const real     = parseFloat(document.getElementById('new-real').value) || 0;
+  const realiz   = parseFloat(document.getElementById('new-realizado').value) || 0;
+  const mrr      = parseFloat(document.getElementById('new-mrr').value)  || 0;
+  const os       = parseFloat(document.getElementById('new-os').value)   || 0;
+
+  if (!mes || !nome || !exec_) { toast('⚠ Preencha Mês, Nome e Executivo.'); return; }
+
+  const newRow = { nome, mes, executivo: exec_, informado: hub, real, momento: realiz, mrr, oneshot: os, status_impl: 'IMPLANTADA' };
+  allData.push(newRow);
+  saveRowToSupabase(newRow);
+
+  // Clear fields
+  ['new-nome','new-hub','new-real','new-realizado','new-mrr','new-os'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('new-mes').value  = '';
+  document.getElementById('new-exec').value = '';
+
+  renderMgmtTable();
+  refreshAllViews();
+  buildMonthChips([...new Set(allData.map(d=>d.mes))].sort((a,b)=>(MONTHS_ORDER.indexOf(a)||99)-(MONTHS_ORDER.indexOf(b)||99)));
+  toast('✅ Casa adicionada com sucesso!');
+}
+
+function renderMgmtMetas() {
+  // All months that have either data or a defined meta
+  const dataMonths = [...new Set(allData.map(d=>d.mes))];
+  const metaMonths = Object.keys(GESTOR_METAS);
+  const allMetaMonths = [...new Set([...dataMonths, ...metaMonths])]
+    .sort((a,b)=>(MONTHS_ORDER.indexOf(a)||99)-(MONTHS_ORDER.indexOf(b)||99));
+
+  document.getElementById('mgmt-metas-grid').innerHTML = allMetaMonths.map(m => {
+    const meta = getGestorMeta(m);
+    const hasData = dataMonths.includes(m);
+    return `<div style="background:var(--gray-50);border-radius:var(--radius);border:1.5px solid ${hasData?'var(--blue-lt)':'var(--gray-200)'};padding:1rem;position:relative;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:700;color:var(--navy);">📅 ${m}</div>
+        ${hasData
+          ? '<span style="font-size:10px;background:var(--blue-lt);color:var(--blue);padding:2px 7px;border-radius:99px;font-weight:600;">Com dados</span>'
+          : `<button onclick="removeGestorMeta('${m}')" style="background:none;border:none;color:var(--gray-400);cursor:pointer;font-size:16px;line-height:1;" title="Remover">×</button>`
+        }
+      </div>
+      <div style="display:grid;gap:8px;">
+        <div>
+          <label style="font-size:11px;color:var(--gray-400);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Meta MRR (R$)</label>
+          <input type="number" class="mgmt-inline-input" style="width:100%;" value="${meta.metaMRR}"
+            onchange="updateGestorMeta('${m}','metaMRR',parseFloat(this.value)||0)">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--gray-400);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px;">Meta One Shot (R$)</label>
+          <input type="number" class="mgmt-inline-input" style="width:100%;" value="${meta.metaOS}"
+            onchange="updateGestorMeta('${m}','metaOS',parseFloat(this.value)||0)">
+        </div>
+      </div>
+    </div>`;
+  }).join('') +
+
+  // Card para adicionar novo mês
+  `<div style="background:white;border-radius:var(--radius);border:2px dashed var(--gray-200);padding:1rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:160px;">
+    <div style="font-size:13px;font-weight:600;color:var(--gray-400);">➕ Adicionar mês</div>
+    <select id="new-meta-mes" style="font-size:12px;font-family:var(--font);padding:7px 10px;border:1.5px solid var(--gray-200);border-radius:8px;outline:none;width:100%;color:var(--gray-800);">
+      <option value="">Selecione o mês...</option>
+      ${MONTHS_ORDER.filter(m=>!allMetaMonths.includes(m)).map(m=>`<option value="${m}">${m}</option>`).join('')}
+    </select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;">
+      <div>
+        <label style="font-size:10px;color:var(--gray-400);font-weight:600;text-transform:uppercase;display:block;margin-bottom:3px;">Meta MRR</label>
+        <input type="number" id="new-meta-mrr" placeholder="R$ 0" style="font-size:12px;font-family:var(--font);padding:6px 8px;border:1.5px solid var(--gray-200);border-radius:8px;outline:none;width:100%;">
+      </div>
+      <div>
+        <label style="font-size:10px;color:var(--gray-400);font-weight:600;text-transform:uppercase;display:block;margin-bottom:3px;">Meta One Shot</label>
+        <input type="number" id="new-meta-os" placeholder="R$ 0" style="font-size:12px;font-family:var(--font);padding:6px 8px;border:1.5px solid var(--gray-200);border-radius:8px;outline:none;width:100%;">
+      </div>
+    </div>
+    <button onclick="addGestorMeta()" class="add-row-btn" style="width:100%;">➕ Adicionar meta</button>
+  </div>`;
+}
+
+function addGestorMeta() {
+  const mes  = document.getElementById('new-meta-mes').value;
+  const mrr  = parseFloat(document.getElementById('new-meta-mrr').value) || 0;
+  const os   = parseFloat(document.getElementById('new-meta-os').value)  || 0;
+  if (!mes) { toast('⚠ Selecione o mês!'); return; }
+  GESTOR_METAS[mes] = { metaMRR: mrr, metaOS: os };
+  saveMetaGestorToSupabase(mes, mrr, os);
+  document.getElementById('new-meta-mes').value = '';
+  document.getElementById('new-meta-mrr').value = '';
+  document.getElementById('new-meta-os').value  = '';
+  renderMgmtMetas();
+  renderGestor();
+  toast('✅ Meta de ' + mes + ' adicionada!');
+}
+
+function removeGestorMeta(mes) {
+  if (!confirm('Remover meta de ' + mes + '?')) return;
+  delete GESTOR_METAS[mes];
+  renderMgmtMetas();
+  renderGestor();
+  toast('🗑 Meta de ' + mes + ' removida.');
+}
+
+function updateGestorMeta(mes, field, value) {
+  if (!GESTOR_METAS[mes]) GESTOR_METAS[mes] = { metaMRR: 0, metaOS: 0 };
+  GESTOR_METAS[mes][field] = value;
+  saveMetaGestorToSupabase(mes, GESTOR_METAS[mes].metaMRR, GESTOR_METAS[mes].metaOS);
+  renderGestor();
+  toast('✅ Meta salva!');
+}
+
+function refreshAllViews() {
+  renderAll();
+  renderEvo();
+  renderPending();
+  renderBacklog();
+  renderComissoes();
+  renderMgmtTable();
+}
+
+
+// ══════════════════════════════════════════
+// SUPABASE INTEGRATION
+// ══════════════════════════════════════════
+const SUPA_URL = 'https://cktsokalrtnxnqhnoukq.supabase.co';
+const SUPA_KEY = 'sb_publishable_J4zbhqu8ok8GkEHTi477BA_zwsA3-vL';
+
+async function supaFetch(path, method='GET', body=null) {
+  const opts = {
+    method,
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method==='POST' ? 'resolution=merge-duplicates,return=minimal' : 'return=minimal'
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(SUPA_URL + '/rest/v1/' + path, opts);
+  if (!res.ok) {
+    const err = await res.text();
+    console.error('Supabase error:', err);
+    return null;
+  }
+  const txt = await res.text();
+  return txt ? JSON.parse(txt) : null;
+}
+
+// ── LOAD ALL DATA FROM SUPABASE
+async function loadFromSupabase() {
+  showLoader('Carregando dados...');
+  try {
+    // Load tpv_data
+    const data = await supaFetch('tpv_data?order=mes,nome');
+    if (data && data.length > 0) {
+      allData = data.map(r => ({
+        nome: r.nome, mes: r.mes, executivo: r.executivo||'',
+        informado: parseFloat(r.informado)||0,
+        real: parseFloat(r.real)||0,
+        momento: parseFloat(r.momento)||0,
+        mrr: parseFloat(r.mrr)||0,
+        oneshot: parseFloat(r.oneshot)||0,
+        status_impl: r.status_impl||'',
+        _id: r.id
+      }));
+    }
+
+    // Load motivos
+    const mots = await supaFetch('tpv_motivos?select=*');
+    if (mots) {
+      motivos = {};
+      mots.forEach(m => {
+        motivos[m.chave] = { exec: m.exec_nome, cat: m.categoria, text: m.texto };
+      });
+    }
+
+    // Load backlog
+    const bklog = await supaFetch('tpv_backlog?select=*');
+    if (bklog) {
+      backlogData = {};
+      bklog.forEach(b => { backlogData[b.chave] = { etapa: b.etapa, motivo: b.motivo }; });
+    }
+
+    // Load metas gestor
+    const metas = await supaFetch('tpv_metas_gestor?select=*');
+    if (metas) {
+      metas.forEach(m => {
+        GESTOR_METAS[m.mes] = { metaMRR: parseFloat(m.meta_mrr)||0, metaOS: parseFloat(m.meta_os)||0 };
+      });
+    }
+
+    hideLoader();
+
+    if (data && data.length > 0) {
+      initDashboard();
+    } else {
+      // No data in DB yet — load from embedded data and save
+      allData = [...EMBEDDED_DATA];
+      if (allData.length > 0) {
+        await saveAllDataToSupabase();
+        initDashboard();
+      }
+    }
+  } catch(e) {
+    console.error('Load error:', e);
+    hideLoader();
+    // Fallback to embedded data
+    allData = EMBEDDED_DATA;
+    if (allData.length > 0) initDashboard();
+    toast('⚠ Offline — usando dados locais');
+  }
+}
+
+// ── SAVE SINGLE ROW TO SUPABASE
+async function saveRowToSupabase(row) {
+  await supaFetch('tpv_data?on_conflict=nome,mes', 'POST', [{
+    nome: row.nome, mes: row.mes, executivo: row.executivo||'',
+    informado: row.informado||0, real: row.real||0, momento: row.momento||0,
+    mrr: row.mrr||0, oneshot: row.oneshot||0, status_impl: row.status_impl||'',
+    updated_at: new Date().toISOString()
+  }]);
+}
+
+// ── SAVE ALL DATA (initial upload)
+async function saveAllDataToSupabase() {
+  const batch = allData.map(r => ({
+    nome: r.nome, mes: r.mes, executivo: r.executivo||'',
+    informado: r.informado||0, real: r.real||0, momento: r.momento||0,
+    mrr: r.mrr||0, oneshot: r.oneshot||0, status_impl: r.status_impl||'',
+    updated_at: new Date().toISOString()
+  }));
+  await supaFetch('tpv_data?on_conflict=nome,mes', 'POST', batch);
+  toast('✅ Dados salvos no banco!');
+}
+
+// ── DELETE ROW FROM SUPABASE
+async function deleteRowFromSupabase(nome, mes) {
+  await supaFetch(`tpv_data?nome=eq.${encodeURIComponent(nome)}&mes=eq.${encodeURIComponent(mes)}`, 'DELETE');
+}
+
+// ── SAVE MOTIVO TO SUPABASE
+async function saveMotivoToSupabase(chave, exec, cat, text) {
+  await supaFetch('tpv_motivos?on_conflict=chave', 'POST', [{
+    chave, exec_nome: exec, categoria: cat, texto: text,
+    updated_at: new Date().toISOString()
+  }]);
+}
+
+// ── SAVE BACKLOG TO SUPABASE
+async function saveBacklogToSupabase(chave, etapa, motivo) {
+  await supaFetch('tpv_backlog?on_conflict=chave', 'POST', [{
+    chave, etapa, motivo, updated_at: new Date().toISOString()
+  }]);
+}
+
+// ── SAVE META GESTOR TO SUPABASE
+async function saveMetaGestorToSupabase(mes, metaMRR, metaOS) {
+  await supaFetch('tpv_metas_gestor?on_conflict=mes', 'POST', [{
+    mes, meta_mrr: metaMRR, meta_os: metaOS,
+    updated_at: new Date().toISOString()
+  }]);
+}
+
+// ── LOADER UI
+function showLoader(msg) {
+  let el = document.getElementById('supa-loader');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'supa-loader';
+    el.style.cssText = 'position:fixed;top:56px;left:0;right:0;background:var(--blue);color:white;text-align:center;padding:8px;font-size:12px;font-weight:600;z-index:999;';
+    document.body.appendChild(el);
+  }
+  el.textContent = '⏳ ' + msg;
+  el.style.display = 'block';
+}
+function hideLoader() {
+  const el = document.getElementById('supa-loader');
+  if (el) el.style.display = 'none';
+}
+
+
+</script>
+
+<script>
+(function waitAndInit() {
+  if (typeof initDashboard !== 'function' || typeof EMBEDDED_DATA === 'undefined') {
+    setTimeout(waitAndInit, 50);
+    return;
+  }
+  document.getElementById('upload-zone').style.display = 'none';
+  document.getElementById('dashboard').style.display   = 'block';
+  allData = JSON.parse(JSON.stringify(EMBEDDED_DATA));
+  initDashboard();
+  if (typeof loadFromSupabase === 'function') {
+    setTimeout(function() {
+      loadFromSupabase().catch(function(e){ console.log('Supabase:', e); });
+    }, 1000);
+  }
+})();
+</script>
+
+</body>
+</html>
